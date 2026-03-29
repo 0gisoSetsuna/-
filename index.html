@@ -81,6 +81,38 @@
         
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f4f9; }
+        @media (max-width: 768px) {
+            /* 1. 搜尋面板改為單列直排 */
+            .filter-panel {
+                grid-template-columns: 1fr; 
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            /* 按鈕群組也改為上下排列，方便手指點擊 */
+            .btn-group {
+                flex-direction: column;
+                margin-top: 5px;
+            }
+            button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            /* 2. 表格外層加上左右滑動功能 */
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* 讓 iOS 滑動更順暢 */
+                box-shadow: 0 0 5px rgba(0,0,0,0.05);
+            }
+            
+            /* 強制表格維持一定寬度，避免文字換行擠在一起 */
+            table {
+                min-width: 900px; 
+                margin-top: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -130,7 +162,7 @@
                 <button onclick="resetFilters()" class="reset-btn">🔄 重設</button>
             </div>
         </div>
-
+        <div class="table-responsive">
         <table>
             <thead>
                 <tr>
