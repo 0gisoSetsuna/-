@@ -5,65 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>龍華科技大學 - 模擬選課系統 (可視化課表)</title>
     <style>
-        body { font-family: "微軟正黑體", sans-serif; margin: 20px; background-color: #f8f9fa; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
-        h1 { color: #0056b3; text-align: left; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        /* 定義主題變數 (淺色) */
+        :root {
+            --bg-body: #f8f9fa;
+            --bg-container: white;
+            --text-main: #333;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --input-border: #ced4da;
+            --panel-bg: #e9ecef;
+            --schedule-bg: #e3f2fd;
+            --schedule-border: #90caf9;
+            --grid-bg: #dee2e6;
+            --empty-cell: white;
+            
+            /* 狀態顏色 */
+            --color-primary: #0056b3;
+            --color-success: #28a745;
+            --color-danger: #d9534f;
+            --color-pending: #adb5bd;
+            
+            /* 課表區塊顏色 */
+            --course-bg: #90caf9;
+            --course-text: #0d47a1;
+            --course-title: #000;
+            --course-hover: #64b5f6;
+            --course-border: #1565c0;
+        }
+
+        /* 定義主題變數 (深色) */
+        body.dark-mode {
+            --bg-body: #121212;
+            --bg-container: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaa;
+            --border-color: #444;
+            --input-border: #555;
+            --panel-bg: #2d2d2d;
+            --schedule-bg: #1e2a38;
+            --schedule-border: #37474f;
+            --grid-bg: #444;
+            --empty-cell: #1e1e1e;
+            
+            /* 狀態顏色 (調亮以適應深色背景) */
+            --color-primary: #64b5f6;
+            --color-success: #81c784;
+            --color-danger: #ef5350;
+            --color-pending: #8d96a0;
+            
+            /* 課表區塊顏色 */
+            --course-bg: #0d47a1;
+            --course-text: #fff;
+            --course-title: #fff;
+            --course-hover: #1565c0;
+            --course-border: #64b5f6;
+        }
+
+        body { font-family: "微軟正黑體", sans-serif; margin: 20px; background-color: var(--bg-body); color: var(--text-main); transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 1400px; margin: auto; background: var(--bg-container); padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; transition: background-color 0.3s; }
         
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { color: var(--color-primary); margin: 0; display: flex; align-items: center; gap: 10px; }
+        
+        /* 切換主題按鈕 */
+        .theme-toggle-btn { background: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; display: flex; align-items: center; gap: 5px; }
+        .theme-toggle-btn:hover { filter: brightness(0.9); }
+
         /* 登入畫面疊層 */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 320px; }
-        .login-box h2 { color: #0056b3; margin-top: 0; }
-        .login-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: var(--bg-container); padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 320px; }
+        .login-box h2 { color: var(--color-primary); margin-top: 0; }
+        .login-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid var(--input-border); background: var(--bg-container); color: var(--text-main); border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
         .login-box button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
         .login-box button:hover { background-color: #004494; }
-        .forgot-pwd-link { display: block; margin-top: 15px; font-size: 14px; color: #6c757d; text-decoration: none; transition: color 0.3s; }
-        .forgot-pwd-link:hover { color: #0056b3; text-decoration: underline; }
+        .forgot-pwd-link { display: block; margin-top: 15px; font-size: 14px; color: var(--text-muted); text-decoration: none; transition: color 0.3s; }
+        .forgot-pwd-link:hover { color: var(--color-primary); text-decoration: underline; }
 
         /* 使用者資訊列 */
-        .user-info-bar { display: none; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #0056b3; }
-        .user-info-bar span { font-size: 16px; font-weight: bold; color: #333; }
+        .user-info-bar { display: none; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid var(--color-primary); }
+        .user-info-bar span { font-size: 16px; font-weight: bold; }
         .logout-btn { background-color: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .logout-btn:hover { background-color: #c82333; }
 
-        /* 篩選器與可視化課表樣式 */
-        .filter-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 20px; background: #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        /* 篩選器樣式 */
+        .filter-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 20px; background: var(--panel-bg); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #495057; }
-        .filter-group input { padding: 10px; border-radius: 5px; border: 1px solid #ced4da; font-size: 14px; height: 40px; box-sizing: border-box; }
+        .filter-group label { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: var(--text-main); }
+        .filter-group input { padding: 10px; border-radius: 5px; border: 1px solid var(--input-border); background: var(--bg-container); color: var(--text-main); font-size: 14px; height: 40px; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; align-items: flex-end; height: 100%; }
         button.search-btn { height: 40px; flex: 1; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background-color: #0056b3; }
         button.reset-btn { height: 40px; flex: 1; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background-color: #6c757d; }
         
-        .my-schedule-panel { background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px solid #90caf9; }
+        /* 課表樣式 */
+        .my-schedule-panel { background: var(--schedule-bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px solid var(--schedule-border); }
         .my-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .my-schedule-header h2 { margin: 0; color: #0d47a1; font-size: 20px; }
-        #credit-status { font-size: 16px; background: white; padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .my-schedule-header h2 { margin: 0; color: var(--color-primary); font-size: 20px; }
+        #credit-status { font-size: 16px; background: var(--bg-container); padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        .visual-timetable-container { width: 100%; overflow-x: auto; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(75px, auto)); gap: 1px; background-color: #dee2e6; border: 1px solid #dee2e6; border-radius: 5px; min-width: 900px; }
-        .grid-header { background-color: #e3f2fd; color: #0d47a1; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 15px; }
-        .period-cell { background-color: #f1f8e9; color: #33691e; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 14px; }
-        .empty-cell { background-color: white; }
-        .course-block { background-color: #90caf9; color: #0d47a1; padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-left: 5px solid #1565c0; overflow: hidden; }
-        .course-block:hover { background-color: #64b5f6; }
+        .visual-timetable-container { width: 100%; overflow-x: auto; background: var(--bg-container); padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(75px, auto)); gap: 1px; background-color: var(--grid-bg); border: 1px solid var(--grid-bg); border-radius: 5px; min-width: 900px; }
+        .grid-header { background-color: var(--schedule-bg); color: var(--color-primary); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 15px; }
+        .period-cell { background-color: var(--panel-bg); color: var(--text-main); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+        .empty-cell { background-color: var(--empty-cell); }
+        .course-block { background-color: var(--course-bg); color: var(--course-text); padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-left: 5px solid var(--course-border); overflow: hidden; }
+        .course-block:hover { background-color: var(--course-hover); }
         .course-details { flex-grow: 1; }
-        .course-title { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; }
-        .course-room { font-size: 11px; font-style: italic; color: #555; margin-top: auto; }
-        .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #d9534f; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.5; }
-        .course-block-remove:hover { opacity: 1; color: #c82333; }
+        .course-title { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: var(--course-title); }
+        .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #ff5252; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.6; }
+        .course-block-remove:hover { opacity: 1; color: #ff0000; }
 
-        /* 表格與按鈕樣式 */
+        /* 表格樣式 */
         .all-courses-panel { margin-top: 30px; }
-        .all-courses-header h2 { margin: 0; color: #0056b3; font-size: 18px; margin-bottom: 15px; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; word-wrap: break-word; min-width: 950px; background: white; }
-        th, td { border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 14px; vertical-align: middle; }
+        .all-courses-header h2 { margin: 0; color: var(--color-primary); font-size: 18px; margin-bottom: 15px; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; word-wrap: break-word; min-width: 950px; background: var(--bg-container); }
+        th, td { border: 1px solid var(--border-color); padding: 10px 8px; text-align: center; font-size: 14px; vertical-align: middle; }
         th { background-color: #0056b3; color: white; font-weight: bold; }
+        body.dark-mode th { background-color: #003366; }
         
         .col-action { width: 10%; } .col-enroll { width: 8%; } .col-class { width: 12%; } .col-course { width: 18%; }
-        .col-required { width: 7%; } .col-credit { width: 12%; } .col-time { width: 11%; } .col-teacher { width: 9%; } .col-room { width: 13%; }
-        .credit-badge { color: #d9534f; font-weight: bold; }
+        .col-required { width: 7%; } .col-credit { width: 15%; } .col-time { width: 11%; } .col-teacher { width: 9%; } .col-room { width: 13%; }
         
-        /* ✨ 各種按鈕狀態 (新增 .remove-table-btn) */
+        /* 按鈕樣式 */
         .btn-base { color: white; border: none; height: 32px; font-size: 13px; padding: 0 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box; font-weight: bold; }
         .add-btn { background-color: #28a745; } .add-btn:hover { background-color: #218838; }
         .full-btn { background-color: #dc3545; cursor: not-allowed; opacity: 0.8; }
@@ -71,8 +133,10 @@
         .cancel-wait-btn { background-color: #fd7e14; } .cancel-wait-btn:hover { background-color: #e3700b; }
         .remove-table-btn { background-color: #dc3545; } .remove-table-btn:hover { background-color: #c82333; }
         
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:hover { background-color: #f1f4f9; }
+        tr:nth-child(even) { background-color: rgba(0,0,0,0.02); }
+        body.dark-mode tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+        tr:hover { background-color: rgba(0,0,0,0.05); }
+        body.dark-mode tr:hover { background-color: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
@@ -80,7 +144,7 @@
     <div id="login-screen">
         <div class="login-box">
             <h2>🔐 模擬選課系統登入</h2>
-            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">※ 首次登入將自動綁定帳號與密碼</p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">※ 首次登入將自動綁定帳號與密碼</p>
             <input type="text" id="username-input" placeholder="請輸入學號或帳號">
             <input type="password" id="password-input" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') performLogin()">
             <button onclick="performLogin()">登入 / 註冊</button>
@@ -89,7 +153,10 @@
     </div>
 
     <div class="container">
-        <h1><span>🏫</span> 龍華科技大學 模擬選課系統</h1>
+        <div class="header-container">
+            <h1><span>🏫</span> 龍華科技大學 模擬選課系統</h1>
+            <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">🌙 深色模式</button>
+        </div>
 
         <div class="user-info-bar" id="user-info-bar">
             <span id="current-user-display">目前登入：無</span>
@@ -99,7 +166,7 @@
         <div class="my-schedule-panel">
             <div class="my-schedule-header">
                 <h2><span>🎒</span> 我的專屬課表</h2>
-                <div id="credit-status"><span style="color: #d9534f; font-weight: bold;">目前學分：0 學分</span></div>
+                <div id="credit-status"><span style="color: var(--color-danger); font-weight: bold;">目前學分：0 學分</span></div>
             </div>
             <div class="visual-timetable-container">
                 <div class="timetable-grid" id="visual-grid"></div>
@@ -149,266 +216,271 @@
         let allCoursesData = [];
         let mySchedule = [];
         let currentUser = null;
-        const MAX_CAPACITY = 2; // 課程人數上限
-        const MAX_WAITLIST = 5; // 候補名單上限
+        const MAX_CAPACITY = 2; 
+        const MAX_WAITLIST = 5; 
 
         // ==========================================
-        // 虛擬資料庫 
+        // 主題切換邏輯
         // ==========================================
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-toggle').innerHTML = isDark ? '☀️ 淺色模式' : '🌙 深色模式';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-toggle').innerHTML = '☀️ 淺色模式';
+            }
+        }
+
+        // ==========================================
+        // 資料與系統邏輯
+        // ==========================================
+        function cleanSymbols(str) { 
+            return (str || '').toString().replace(/\s*[,，/;；]\s*/g, '、').trim(); 
+        }
+
         function getDatabase() {
             let dbStr = localStorage.getItem('schoolDB');
-            let db;
-            if (!dbStr) {
-                db = { users: {}, enrollments: {}, waitlists: {}, userSchedules: {} }; 
-                localStorage.setItem('schoolDB', JSON.stringify(db));
-            } else {
-                db = JSON.parse(dbStr);
-                if (!db.users) db.users = {}; 
-                if (!db.waitlists) db.waitlists = {}; 
-                localStorage.setItem('schoolDB', JSON.stringify(db));
-            }
+            let db = dbStr ? JSON.parse(dbStr) : { users: {}, enrollments: {}, waitlists: {}, userSchedules: {} };
+            if (!db.users) db.users = {}; 
+            if (!db.waitlists) db.waitlists = {}; 
             return db;
         }
         function saveDatabase(db) { localStorage.setItem('schoolDB', JSON.stringify(db)); }
 
-        // ==========================================
-        // 登入與忘記密碼
-        // ==========================================
         function performLogin() {
             const username = document.getElementById('username-input').value.trim();
             const password = document.getElementById('password-input').value.trim();
-            if (!username || !password) { alert('⚠️ 帳號與密碼均不可為空！'); return; }
+            if (!username || !password) { alert('⚠️ 帳號與密碼不可為空！'); return; }
             let db = getDatabase();
-            if (db.users[username]) {
-                if (db.users[username] !== password) { alert('❌ 密碼錯誤，請重新輸入！'); document.getElementById('password-input').value = ''; return; }
-            } else {
-                db.users[username] = password; saveDatabase(db); alert(`✅ 歡迎！已為您註冊新帳號：${username}`);
-            }
+            if (db.users[username] && db.users[username] !== password) { alert('❌ 密碼錯誤！'); return; }
+            db.users[username] = password;
             currentUser = username;
-            document.getElementById('username-input').value = ''; document.getElementById('password-input').value = '';
-            document.getElementById('login-screen').style.display = 'none'; document.getElementById('user-info-bar').style.display = 'flex';
+            mySchedule = db.userSchedules[currentUser] || [];
+            db.userSchedules[currentUser] = mySchedule;
+            saveDatabase(db);
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('user-info-bar').style.display = 'flex';
             document.getElementById('current-user-display').innerText = `👤 目前登入：${currentUser}`;
-            if (!db.userSchedules[currentUser]) { db.userSchedules[currentUser] = []; saveDatabase(db); }
-            mySchedule = db.userSchedules[currentUser];
             renderVisualSchedule(); updateCreditStatus(); applyFilters();
         }
-        function performLogout() { currentUser = null; mySchedule = []; document.getElementById('login-screen').style.display = 'flex'; document.getElementById('user-info-bar').style.display = 'none'; }
-        function forgotPassword() {
-            const username = prompt('【重設密碼】\n請輸入您的學號或帳號：'); if (!username) return;
-            let db = getDatabase();
-            if (!db.users[username]) { alert('❌ 找不到此帳號，請確認輸入是否正確。'); return; }
-            const newPassword = prompt(`正在為帳號 [${username}] 重設密碼。\n請輸入您的新密碼：`); if (!newPassword) return;
-            db.users[username] = newPassword; saveDatabase(db);
-            alert('✅ 密碼重設成功！請使用新密碼登入系統。'); document.getElementById('username-input').value = username; document.getElementById('password-input').focus();
-        }
 
-        // ==========================================
-        // 共用檢查邏輯
-        // ==========================================
+        function performLogout() { location.reload(); }
+        function forgotPassword() { alert("請聯繫管理員重設密碼。"); }
+
         function getCredits(course) { let parts = (course.hours_credit || '').split('-'); return (parts.length === 3) ? parseFloat(parts[2]) : 0; }
         function extractTimes(sched) {
             if (!sched || sched === '00' || sched === 'null') return [];
-            let times = []; const schedStr = sched.toString();
-            for(let i=0; i<schedStr.length; i+=2) { if(schedStr.substring(i, i+2)) times.push(schedStr.substring(i, i+2)); }
+            let times = []; const s = sched.toString();
+            for(let i=0; i<s.length; i+=2) { let t = s.substring(i, i+2); if(t) times.push(t); }
             return times;
-        };
+        }
 
         function checkEligibility(newCourse, scheduleArray) {
             const newTimes = extractTimes(newCourse.schedule);
-            if (newTimes.length > 0) {
-                for (let c of scheduleArray) {
-                    const isConflict = newTimes.some(time => extractTimes(c.schedule).includes(time));
-                    if (isConflict) return { pass: false, reason: `與【${c.course_name}】衝堂` };
-                }
+            for (let c of scheduleArray) {
+                if (newTimes.some(t => extractTimes(c.schedule).includes(t))) return { pass: false, reason: `與【${c.course_name}】衝堂` };
             }
-            const newTotal = scheduleArray.reduce((sum, c) => sum + getCredits(c), 0) + getCredits(newCourse);
-            if (newTotal > 25) return { pass: false, reason: `超過 25 學分上限` };
+            const total = scheduleArray.reduce((sum, c) => sum + getCredits(c), 0) + getCredits(newCourse);
+            if (total > 25) return { pass: false, reason: `超過 25 學分上限` };
             return { pass: true };
         }
 
         function updateCreditStatus() {
             let total = mySchedule.reduce((sum, c) => sum + getCredits(c), 0);
             let statusDiv = document.getElementById('credit-status');
-            if (total < 16) { statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (⚠️ 低於下限)</span>`; }
-            else if (total > 25) { statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (❌ 已超過上限 25 學分)</span>`; }
-            else { statusDiv.innerHTML = `<span style="color: #28a745; font-weight: bold;">目前學分：${total} 學分 (✅ 符合規定)</span>`; }
+            let colorVar = (total < 16 || total > 25) ? 'var(--color-danger)' : 'var(--color-success)';
+            statusDiv.innerHTML = `<span style="color: ${colorVar}; font-weight: bold;">目前學分：${total} 學分</span>`;
         }
 
-        // ==========================================
-        // 選課與候補邏輯
-        // ==========================================
         function addCourse(id) {
-            const courseToAdd = allCoursesData.find(c => c.id === id);
-            if (!courseToAdd) return;
+            const course = allCoursesData.find(c => c.id === id);
             let db = getDatabase();
-            let currentEnrolled = db.enrollments[id] || [];
-            let currentWaitlist = db.waitlists[id] || [];
+            let enrolled = db.enrollments[id] || [];
+            let waitlist = db.waitlists[id] || [];
 
-            if (mySchedule.some(c => c.id === id)) { alert("您已經選過這堂課囉！"); return; }
-            if (currentWaitlist.includes(currentUser)) { alert("您已經在候補名單中囉！"); return; }
+            if (mySchedule.some(c => c.id === id) || waitlist.includes(currentUser)) { alert("已在清單中。"); return; }
+            const eli = checkEligibility(course, mySchedule);
+            if (!eli.pass) { alert(eli.reason); return; }
 
-            const eligibility = checkEligibility(courseToAdd, mySchedule);
-            if (!eligibility.pass) { alert(`⚠️ 無法加入！\n原因：${eligibility.reason}`); return; }
-
-            if (currentEnrolled.length >= MAX_CAPACITY) {
-                if (currentWaitlist.length >= MAX_WAITLIST) {
-                    alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】選課與候補人數皆已達上限！`); return;
-                } else {
-                    currentWaitlist.push(currentUser);
-                    db.waitlists[id] = currentWaitlist;
-                    saveDatabase(db);
-                    alert(`📝 課程已滿，已為您加入候補名單！\n目前候補順位：第 ${currentWaitlist.length} 位`);
-                }
+            if (enrolled.length >= MAX_CAPACITY) {
+                if (waitlist.length >= MAX_WAITLIST) { alert("候補已滿。"); return; }
+                waitlist.push(currentUser);
+                db.waitlists[id] = waitlist;
+                alert("已加入候補。");
             } else {
-                mySchedule.push(courseToAdd);
-                currentEnrolled.push(currentUser); 
+                enrolled.push(currentUser);
+                mySchedule.push(course);
+                db.enrollments[id] = enrolled;
                 db.userSchedules[currentUser] = mySchedule;
-                db.enrollments[id] = currentEnrolled;
-                saveDatabase(db);
             }
-            renderVisualSchedule(); updateCreditStatus(); applyFilters(); 
+            saveDatabase(db);
+            renderVisualSchedule(); updateCreditStatus(); applyFilters();
         }
 
-        // ==========================================
-        // 退選與自動遞補邏輯
-        // ==========================================
         function removeCourse(id) {
             let db = getDatabase();
-            let currentWaitlist = db.waitlists[id] || [];
-            
-            // 取消候補
-            if (currentWaitlist.includes(currentUser)) {
-                db.waitlists[id] = currentWaitlist.filter(user => user !== currentUser);
-                saveDatabase(db);
-                applyFilters();
-                return;
-            }
-
-            // 退選已選上的課
+            db.waitlists[id] = (db.waitlists[id] || []).filter(u => u !== currentUser);
+            db.enrollments[id] = (db.enrollments[id] || []).filter(u => u !== currentUser);
             mySchedule = mySchedule.filter(c => c.id !== id);
             db.userSchedules[currentUser] = mySchedule;
-            if (db.enrollments[id]) { db.enrollments[id] = db.enrollments[id].filter(user => user !== currentUser); }
             
-            // 執行自動遞補
-            autoPromoteWaitlist(id, db);
-            
-            saveDatabase(db);
-            renderVisualSchedule(); updateCreditStatus(); applyFilters(); 
-        }
-
-        // 自動從候補名單拉人進來
-        function autoPromoteWaitlist(courseId, db) {
-            let enrolled = db.enrollments[courseId] || [];
-            let waitlist = db.waitlists[courseId] || [];
-            const courseToAdd = allCoursesData.find(c => c.id === courseId);
-
+            // 自動遞補
+            let enrolled = db.enrollments[id] || [];
+            let waitlist = db.waitlists[id] || [];
+            const course = allCoursesData.find(c => c.id === id);
             while (enrolled.length < MAX_CAPACITY && waitlist.length > 0) {
-                let nextUser = waitlist.shift();
-                let nextUserSchedule = db.userSchedules[nextUser] || [];
-                let eligibility = checkEligibility(courseToAdd, nextUserSchedule);
-                
-                if (eligibility.pass) {
-                    enrolled.push(nextUser);
-                    nextUserSchedule.push(courseToAdd);
-                    db.userSchedules[nextUser] = nextUserSchedule;
+                let next = waitlist.shift();
+                let nextSched = db.userSchedules[next] || [];
+                if (checkEligibility(course, nextSched).pass) {
+                    enrolled.push(next);
+                    nextSched.push(course);
+                    db.userSchedules[next] = nextSched;
                 }
             }
-            db.enrollments[courseId] = enrolled;
-            db.waitlists[courseId] = waitlist;
+            db.enrollments[id] = enrolled;
+            db.waitlists[id] = waitlist;
+            
+            saveDatabase(db);
+            renderVisualSchedule(); updateCreditStatus(); applyFilters();
         }
 
-        // ==========================================
-        // 可視化課表與表格渲染
-        // ==========================================
         function renderVisualSchedule() {
             const grid = document.getElementById('visual-grid'); grid.innerHTML = ''; 
             grid.appendChild(createCell('節 / 週', 'grid-header'));
-            ['週一', '週二', '週三', '週四', '週五', '週六'].forEach(day => grid.appendChild(createCell(day, 'grid-header')));
+            ['一', '二', '三', '四', '五', '六'].forEach(d => grid.appendChild(createCell(`週${d}`, 'grid-header')));
 
-            const scheduleMap = new Map(); 
-            mySchedule.forEach(course => { extractTimes(course.schedule).forEach(time => scheduleMap.set(`${time[0]}-${time[1]}`, course)); });
+            const map = new Map(); 
+            mySchedule.forEach(c => extractTimes(c.schedule).forEach(t => map.set(t, c)));
 
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E'].forEach((pdKey, index) => {
-                grid.appendChild(createCell(`第 ${pdKey} 節`, 'period-cell'));
-                for (let day = 1; day <= 6; day++) {
-                    const course = scheduleMap.get(`${day}-${pdKey}`);
-                    grid.appendChild(course ? createCourseBlock(course, day, index + 1) : createCell('', 'empty-cell'));
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E'].forEach((pk, idx) => {
+                grid.appendChild(createCell(`第 ${pk} 節`, 'period-cell'));
+                for (let d = 1; d <= 6; d++) {
+                    const c = map.get(`${d}${pk}`);
+                    if (c) {
+                        const b = document.createElement('div'); b.className = 'course-block';
+                        b.style.gridColumn = d + 1; b.style.gridRow = idx + 2;
+                        b.innerHTML = `<div class="course-details"><div class="course-title">${c.course_name}</div><div style="font-size:11px;">${c.class_name}</div></div>`;
+                        const r = document.createElement('button'); r.className = 'course-block-remove'; r.innerHTML = '❌'; r.onclick = () => removeCourse(c.id);
+                        b.appendChild(r); grid.appendChild(b);
+                    } else { grid.appendChild(createCell('', 'empty-cell')); }
                 }
             });
         }
-
-        function createCell(text, className) { const cell = document.createElement('div'); cell.className = className; cell.textContent = text; return cell; }
-        function createCourseBlock(course, day, periodIndex) {
-            const block = document.createElement('div'); block.className = 'course-block'; block.style.gridColumn = day + 1; block.style.gridRow = periodIndex + 1; 
-            block.innerHTML = `<div class="course-details"><div class="course-title">${course.course_name}</div><div style="font-size: 11px;">${course.class_name}</div></div>`;
-            const removeBtn = document.createElement('button'); removeBtn.className = 'course-block-remove'; removeBtn.innerHTML = '❌'; removeBtn.onclick = () => removeCourse(course.id);
-            block.appendChild(removeBtn); return block;
-        }
+        function createCell(t, n) { const c = document.createElement('div'); c.className = n; c.textContent = t; return c; }
 
         function generateTableRow(c, db) {
-            const getDisplay = (val) => { const str = (val || '').toString().trim(); return (str === '' || str === 'null' || str === '0') ? '<span style="color:#adb5bd;">待定</span>' : str; };
-            let parts = (c.hours_credit || '').split('-');
-            let creditDisplay = (parts.length === 3 && parts[2] !== '0.00') ? `<span style="color:#d9534f; font-weight:bold;">${parseFloat(parts[2])}學分</span>` : '<span style="color:#adb5bd;">待定</span>';
-            
-            let enrolledUsers = db.enrollments[c.id] || [];
-            let waitlistedUsers = db.waitlists[c.id] || [];
-            
-            let isFull = enrolledUsers.length >= MAX_CAPACITY;
-            let iAmEnrolled = enrolledUsers.includes(currentUser);
-            let iAmWaitlisted = waitlistedUsers.includes(currentUser);
-
-            let enrollDisplayColor = iAmEnrolled ? '#28a745' : (isFull ? (iAmWaitlisted ? '#fd7e14' : '#dc3545') : '#0056b3');
-            let enrollText = `<div style="color: ${enrollDisplayColor}; font-weight: bold;">${enrolledUsers.length}/${MAX_CAPACITY}</div>`;
-            if (waitlistedUsers.length > 0) {
-                enrollText += `<div style="font-size:11px; color:#6c757d; margin-top:3px;">候補: ${waitlistedUsers.length}/${MAX_WAITLIST}</div>`;
-            }
-
-            // ✨ 動態產生按鈕 (修改處：讓已選上的課程可以快速退選)
-            let actionButton = '';
-            if (iAmEnrolled) { 
-                actionButton = `<button class="btn-base remove-table-btn" onclick="removeCourse(${c.id})">❌ 退選</button>`; 
-            } else if (iAmWaitlisted) {
-                let rank = waitlistedUsers.indexOf(currentUser) + 1;
-                actionButton = `<button class="btn-base cancel-wait-btn" onclick="removeCourse(${c.id})">取消候補 (#${rank})</button>`;
-            } else if (isFull) {
-                if (waitlistedUsers.length >= MAX_WAITLIST) {
-                    actionButton = `<button class="btn-base full-btn" disabled>⛔ 額滿</button>`;
-                } else {
-                    actionButton = `<button class="btn-base wait-btn" onclick="addCourse(${c.id})">📝 候補</button>`;
+            const getD = (v) => {
+                const str = cleanSymbols(v);
+                if (str === '' || str === 'null' || str === '0' || str === '00') {
+                    return '<span style="color:var(--color-pending); font-style:italic;">待定</span>';
                 }
-            } else { 
-                actionButton = `<button class="btn-base add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`; 
+                return str;
+            };
+            
+            let parts = (c.hours_credit || '').split('-');
+            let creditHtml = '<span style="color:var(--color-pending); font-style:italic;">待定</span>';
+            if (parts.length === 3) {
+                let h = parseFloat(parts[0]);
+                let cr = parseFloat(parts[2]);
+                if (h !== 0 || cr !== 0) {
+                    creditHtml = `<span style="color:var(--color-danger); font-weight:bold;">${cr}學分</span> / ${h}小時`;
+                }
             }
 
-            return `<tr><td>${actionButton}</td><td>${enrollText}</td><td>${getDisplay(c.class_name)}</td><td><strong>${getDisplay(c.course_name)}</strong></td><td>${getDisplay(c.required_elective)}</td><td>${creditDisplay}</td><td>${getDisplay(c.schedule)}</td><td>${getDisplay(c.teacher)}</td><td>${getDisplay(c.classroom)}</td></tr>`;
+            let enr = db.enrollments[c.id] || [];
+            let wait = db.waitlists[c.id] || [];
+            let isEnr = enr.includes(currentUser);
+            let isWait = wait.includes(currentUser);
+            let isFull = enr.length >= MAX_CAPACITY;
+
+            let btn = '';
+            if (isEnr) btn = `<button class="btn-base remove-table-btn" onclick="removeCourse(${c.id})">❌ 退選</button>`;
+            else if (isWait) btn = `<button class="btn-base cancel-wait-btn" onclick="removeCourse(${c.id})">取消候補 (#${wait.indexOf(currentUser)+1})</button>`;
+            else if (isFull) btn = wait.length >= MAX_WAITLIST ? `<button class="btn-base full-btn" disabled>⛔ 額滿</button>` : `<button class="btn-base wait-btn" onclick="addCourse(${c.id})">📝 候補</button>`;
+            else btn = `<button class="btn-base add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`;
+
+            let statusColor = isEnr ? 'var(--color-success)' : (isFull ? 'var(--color-danger)' : 'var(--color-primary)');
+
+            return `<tr>
+                <td>${btn}</td>
+                <td><b style="color:${statusColor}">${enr.length}/${MAX_CAPACITY}</b>${wait.length?`<br><small style="color:var(--text-muted)">候補:${wait.length}</small>`:''}</td>
+                <td>${getD(c.class_name)}</td>
+                <td><b>${getD(c.course_name)}</b></td>
+                <td>${getD(c.required_elective)}</td>
+                <td>${creditHtml}</td>
+                <td>${getD(c.schedule)}</td>
+                <td>${getD(c.teacher)}</td>
+                <td>${getD(c.classroom)}</td>
+            </tr>`;
         }
 
         function renderTable(data) {
-            const body = document.getElementById('course-list');
-            if (data.length === 0) { body.innerHTML = '<tr><td colspan="9">查無符合條件的課程</td></tr>'; return; }
-            let db = getDatabase(); body.innerHTML = data.map(c => generateTableRow(c, db)).join('');
+            const b = document.getElementById('course-list');
+            const db = getDatabase();
+            b.innerHTML = data.length ? data.map(c => generateTableRow(c, db)).join('') : '<tr><td colspan="9" style="color:var(--text-muted)">查無資料</td></tr>';
         }
 
-        // 初始化與下拉選單邏輯
         async function init() {
+            loadTheme(); // 初始化時讀取主題設定
             try {
-                const response = await fetch('./courses.json'); const data = await response.json();
-                let filteredData = data.filter(c => (c.class_name && c.class_name.toString().length >= 2) || (c.course_name && c.course_name.toString().length >= 2));
-                allCoursesData = filteredData.sort((a, b) => (a.class_name || "").toString().localeCompare((b.class_name || "").toString(), 'zh-Hant'));
+                const res = await fetch('./courses.json');
+                const data = await res.json();
+                allCoursesData = data.filter(c => (c.class_name && c.class_name.length > 1) || (c.course_name && c.course_name.length > 1));
                 populateDropdowns(allCoursesData);
-            } catch (e) { document.getElementById('course-list').innerHTML = `<tr><td colspan="9" style="color: red;">載入失敗</td></tr>`; }
+            } catch (e) { document.getElementById('course-list').innerHTML = '<tr><td colspan="9" style="color:var(--color-danger)">載入失敗</td></tr>'; }
         }
 
         function populateDropdowns(data) {
-            const classes = new Set(), courses = new Set();
-            data.forEach(c => { if(c.class_name) classes.add(c.class_name.trim()); if(c.course_name) courses.add(c.course_name.trim()); });
-            fillDatalist('list-class', [...classes].sort()); fillDatalist('list-course', [...courses].sort());
+            const sets = { class: new Set(), course: new Set(), req: new Set(), cre: new Set(), time: new Set(), tea: new Set(), room: new Set() };
+            data.forEach(c => {
+                if (c.class_name) sets.class.add(c.class_name.trim());
+                if (c.course_name) sets.course.add(c.course_name.trim());
+                if (c.required_elective) sets.req.add(c.required_elective.trim());
+                if (c.schedule) extractTimes(c.schedule).forEach(t => sets.time.add(t));
+                let t = cleanSymbols(c.teacher); if(t && t !== 'null' && t !== '0' && t !== '00') sets.tea.add(t);
+                let r = cleanSymbols(c.classroom); if(r && r !== 'null' && r !== '0' && r !== '00') sets.room.add(r);
+                let p = (c.hours_credit || '').split('-'); if(p.length===3 && parseFloat(p[2]) !== 0) sets.cre.add(parseFloat(p[2]).toString());
+            });
+            fillDL('list-class', [...sets.class].sort());
+            fillDL('list-course', [...sets.course].sort());
+            fillDL('list-required', [...sets.req].sort());
+            fillDL('list-credit', [...sets.cre].sort((a,b)=>a-b));
+            fillDL('list-time', [...sets.time].sort());
+            fillDL('list-teacher', [...sets.tea].sort());
+            fillDL('list-room', [...sets.room].sort());
         }
-        function fillDatalist(id, arr) { const el = document.getElementById(id); el.innerHTML = ''; arr.forEach(val => { let opt = document.createElement("option"); opt.value = val; el.appendChild(opt); }); }
-        function applyFilters() { renderTable(allCoursesData); } 
-        function resetFilters() { document.querySelectorAll('.filter-group input').forEach(input => input.value = ''); renderTable(allCoursesData); }
+        function fillDL(id, arr) { const l = document.getElementById(id); l.innerHTML = arr.map(v => `<option value="${v}">`).join(''); }
+
+        function applyFilters() {
+            const f = {
+                cl: document.getElementById('sel-class').value,
+                co: document.getElementById('sel-course').value,
+                re: document.getElementById('sel-required').value,
+                cr: document.getElementById('sel-credit').value,
+                ti: document.getElementById('sel-time').value,
+                te: document.getElementById('sel-teacher').value,
+                ro: document.getElementById('sel-room').value
+            };
+            const filtered = allCoursesData.filter(c => {
+                let p = (c.hours_credit || '').split('-');
+                return (!f.cl || c.class_name.includes(f.cl)) &&
+                       (!f.co || c.course_name.includes(f.co)) &&
+                       (!f.re || c.required_elective.includes(f.re)) &&
+                       (!f.cr || (p[2] && parseFloat(p[2]).toString() === f.cr)) &&
+                       (!f.ti || c.schedule.includes(f.ti)) &&
+                       (!f.te || cleanSymbols(c.teacher).includes(f.te)) &&
+                       (!f.ro || cleanSymbols(c.classroom).includes(f.ro));
+            });
+            renderTable(filtered);
+        }
+        function resetFilters() { document.querySelectorAll('.filter-group input').forEach(i => i.value = ''); applyFilters(); }
 
         window.onload = init;
     </script>
 </body>
-</html> 
+</html>
