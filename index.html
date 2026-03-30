@@ -25,7 +25,7 @@
         .logout-btn { background-color: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .logout-btn:hover { background-color: #c82333; }
 
-        /* 篩選器與可視化課表樣式 (省略部分保持不變以節省空間) */
+        /* 篩選器與可視化課表樣式 */
         .filter-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 20px; background: #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #495057; }
@@ -63,12 +63,13 @@
         .col-required { width: 7%; } .col-credit { width: 12%; } .col-time { width: 11%; } .col-teacher { width: 9%; } .col-room { width: 13%; }
         .credit-badge { color: #d9534f; font-weight: bold; }
         
-        /* 各種按鈕狀態 */
-        .btn-base { color: white; border: none; height: 32px; font-size: 13px; padding: 0 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box; }
+        /* ✨ 各種按鈕狀態 (新增 .remove-table-btn) */
+        .btn-base { color: white; border: none; height: 32px; font-size: 13px; padding: 0 10px; border-radius: 5px; cursor: pointer; transition: 0.2s; width: 100%; box-sizing: border-box; font-weight: bold; }
         .add-btn { background-color: #28a745; } .add-btn:hover { background-color: #218838; }
         .full-btn { background-color: #dc3545; cursor: not-allowed; opacity: 0.8; }
         .wait-btn { background-color: #17a2b8; } .wait-btn:hover { background-color: #138496; }
         .cancel-wait-btn { background-color: #fd7e14; } .cancel-wait-btn:hover { background-color: #e3700b; }
+        .remove-table-btn { background-color: #dc3545; } .remove-table-btn:hover { background-color: #c82333; }
         
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f4f9; }
@@ -149,10 +150,10 @@
         let mySchedule = [];
         let currentUser = null;
         const MAX_CAPACITY = 2; // 課程人數上限
-        const MAX_WAITLIST = 5; // ✨ 候補名單上限
+        const MAX_WAITLIST = 5; // 候補名單上限
 
         // ==========================================
-        // 虛擬資料庫 (新增 waitlists)
+        // 虛擬資料庫 
         // ==========================================
         function getDatabase() {
             let dbStr = localStorage.getItem('schoolDB');
@@ -163,7 +164,7 @@
             } else {
                 db = JSON.parse(dbStr);
                 if (!db.users) db.users = {}; 
-                if (!db.waitlists) db.waitlists = {}; // 補上新結構
+                if (!db.waitlists) db.waitlists = {}; 
                 localStorage.setItem('schoolDB', JSON.stringify(db));
             }
             return db;
@@ -171,7 +172,7 @@
         function saveDatabase(db) { localStorage.setItem('schoolDB', JSON.stringify(db)); }
 
         // ==========================================
-        // 登入與忘記密碼 (保持不變)
+        // 登入與忘記密碼
         // ==========================================
         function performLogin() {
             const username = document.getElementById('username-input').value.trim();
@@ -202,7 +203,7 @@
         }
 
         // ==========================================
-        // ✨ 共用檢查邏輯
+        // 共用檢查邏輯
         // ==========================================
         function getCredits(course) { let parts = (course.hours_credit || '').split('-'); return (parts.length === 3) ? parseFloat(parts[2]) : 0; }
         function extractTimes(sched) {
@@ -212,9 +213,7 @@
             return times;
         };
 
-        // 獨立出檢查衝堂與學分的函數，方便遞補時重複使用
         function checkEligibility(newCourse, scheduleArray) {
-            // 1. 檢查衝堂
             const newTimes = extractTimes(newCourse.schedule);
             if (newTimes.length > 0) {
                 for (let c of scheduleArray) {
@@ -222,10 +221,8 @@
                     if (isConflict) return { pass: false, reason: `與【${c.course_name}】衝堂` };
                 }
             }
-            // 2. 檢查學分
             const newTotal = scheduleArray.reduce((sum, c) => sum + getCredits(c), 0) + getCredits(newCourse);
             if (newTotal > 25) return { pass: false, reason: `超過 25 學分上限` };
-
             return { pass: true };
         }
 
@@ -238,7 +235,7 @@
         }
 
         // ==========================================
-        // ✨ 選課與候補邏輯
+        // 選課與候補邏輯
         // ==========================================
         function addCourse(id) {
             const courseToAdd = allCoursesData.find(c => c.id === id);
@@ -250,11 +247,9 @@
             if (mySchedule.some(c => c.id === id)) { alert("您已經選過這堂課囉！"); return; }
             if (currentWaitlist.includes(currentUser)) { alert("您已經在候補名單中囉！"); return; }
 
-            // 檢查是否符合資格 (衝堂與學分)
             const eligibility = checkEligibility(courseToAdd, mySchedule);
             if (!eligibility.pass) { alert(`⚠️ 無法加入！\n原因：${eligibility.reason}`); return; }
 
-            // 判斷是直接選上，還是進入候補
             if (currentEnrolled.length >= MAX_CAPACITY) {
                 if (currentWaitlist.length >= MAX_WAITLIST) {
                     alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】選課與候補人數皆已達上限！`); return;
@@ -275,13 +270,13 @@
         }
 
         // ==========================================
-        // ✨ 退選與自動遞補邏輯
+        // 退選與自動遞補邏輯
         // ==========================================
         function removeCourse(id) {
             let db = getDatabase();
             let currentWaitlist = db.waitlists[id] || [];
             
-            // 情況A：取消候補
+            // 取消候補
             if (currentWaitlist.includes(currentUser)) {
                 db.waitlists[id] = currentWaitlist.filter(user => user !== currentUser);
                 saveDatabase(db);
@@ -289,7 +284,7 @@
                 return;
             }
 
-            // 情況B：退選已選上的課
+            // 退選已選上的課
             mySchedule = mySchedule.filter(c => c.id !== id);
             db.userSchedules[currentUser] = mySchedule;
             if (db.enrollments[id]) { db.enrollments[id] = db.enrollments[id].filter(user => user !== currentUser); }
@@ -301,27 +296,22 @@
             renderVisualSchedule(); updateCreditStatus(); applyFilters(); 
         }
 
-        // ✨ 自動從候補名單拉人進來
+        // 自動從候補名單拉人進來
         function autoPromoteWaitlist(courseId, db) {
             let enrolled = db.enrollments[courseId] || [];
             let waitlist = db.waitlists[courseId] || [];
             const courseToAdd = allCoursesData.find(c => c.id === courseId);
 
-            // 當還有空位且有人排隊時，嘗試遞補
             while (enrolled.length < MAX_CAPACITY && waitlist.length > 0) {
-                let nextUser = waitlist.shift(); // 抓出第一順位
+                let nextUser = waitlist.shift();
                 let nextUserSchedule = db.userSchedules[nextUser] || [];
-                
-                // 檢查該名單的第一順位現在是否還有資格 (可能他在等待期間選了別的課導致衝堂)
                 let eligibility = checkEligibility(courseToAdd, nextUserSchedule);
                 
                 if (eligibility.pass) {
-                    // 資格符合，恭喜選上！
                     enrolled.push(nextUser);
                     nextUserSchedule.push(courseToAdd);
                     db.userSchedules[nextUser] = nextUserSchedule;
                 }
-                // 如果資格不符，系統會直接跳過他 (已經被 shift 拿掉了)，進入下一次迴圈找下一位
             }
             db.enrollments[courseId] = enrolled;
             db.waitlists[courseId] = waitlist;
@@ -367,17 +357,16 @@
             let iAmEnrolled = enrolledUsers.includes(currentUser);
             let iAmWaitlisted = waitlistedUsers.includes(currentUser);
 
-            // ✨ 更新人數顯示狀態
             let enrollDisplayColor = iAmEnrolled ? '#28a745' : (isFull ? (iAmWaitlisted ? '#fd7e14' : '#dc3545') : '#0056b3');
             let enrollText = `<div style="color: ${enrollDisplayColor}; font-weight: bold;">${enrolledUsers.length}/${MAX_CAPACITY}</div>`;
             if (waitlistedUsers.length > 0) {
                 enrollText += `<div style="font-size:11px; color:#6c757d; margin-top:3px;">候補: ${waitlistedUsers.length}/${MAX_WAITLIST}</div>`;
             }
 
-            // ✨ 動態產生按鈕 (加入、已選、候補、取消候補、額滿)
+            // ✨ 動態產生按鈕 (修改處：讓已選上的課程可以快速退選)
             let actionButton = '';
             if (iAmEnrolled) { 
-                actionButton = `<button class="btn-base" style="background-color: #6c757d; cursor: not-allowed;" disabled>✅ 已選</button>`; 
+                actionButton = `<button class="btn-base remove-table-btn" onclick="removeCourse(${c.id})">❌ 退選</button>`; 
             } else if (iAmWaitlisted) {
                 let rank = waitlistedUsers.indexOf(currentUser) + 1;
                 actionButton = `<button class="btn-base cancel-wait-btn" onclick="removeCourse(${c.id})">取消候補 (#${rank})</button>`;
@@ -416,10 +405,10 @@
             fillDatalist('list-class', [...classes].sort()); fillDatalist('list-course', [...courses].sort());
         }
         function fillDatalist(id, arr) { const el = document.getElementById(id); el.innerHTML = ''; arr.forEach(val => { let opt = document.createElement("option"); opt.value = val; el.appendChild(opt); }); }
-        function applyFilters() { renderTable(allCoursesData); } // 簡化展示
+        function applyFilters() { renderTable(allCoursesData); } 
         function resetFilters() { document.querySelectorAll('.filter-group input').forEach(input => input.value = ''); renderTable(allCoursesData); }
 
         window.onload = init;
     </script>
 </body>
-</html>
+</html> 
