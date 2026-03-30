@@ -9,15 +9,19 @@
         .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
         h1 { color: #0056b3; text-align: left; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
-        /* ✨ 新增：登入畫面疊層 */
+        /* 登入畫面疊層 */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 300px; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 320px; }
         .login-box h2 { color: #0056b3; margin-top: 0; }
-        .login-box input { width: 100%; padding: 10px; margin: 15px 0; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
-        .login-box button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .login-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        .login-box button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
         .login-box button:hover { background-color: #004494; }
+        
+        /* ✨ 新增：忘記密碼連結樣式 */
+        .forgot-pwd-link { display: block; margin-top: 15px; font-size: 14px; color: #6c757d; text-decoration: none; transition: color 0.3s; }
+        .forgot-pwd-link:hover { color: #0056b3; text-decoration: underline; }
 
-        /* ✨ 新增：使用者資訊列 */
+        /* 使用者資訊列 */
         .user-info-bar { display: none; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #0056b3; }
         .user-info-bar span { font-size: 16px; font-weight: bold; color: #333; }
         .logout-btn { background-color: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
@@ -65,7 +69,7 @@
         th { background-color: #0056b3; color: white; font-weight: bold; }
         
         .col-action   { width: 8%; }
-        .col-enroll   { width: 7%; } /* ✨ 新增：選課人數欄位 */
+        .col-enroll   { width: 7%; } 
         .col-class    { width: 13%; }
         .col-course   { width: 20%; }
         .col-required { width: 7%; }
@@ -89,10 +93,15 @@
 
     <div id="login-screen">
         <div class="login-box">
-            <h2>🔐 模擬選課登入</h2>
-            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">免註冊，直接輸入帳號即可建立專屬課表</p>
-            <input type="text" id="username-input" placeholder="請輸入學號或姓名" onkeypress="if(event.key === 'Enter') performLogin()">
-            <button onclick="performLogin()">進入系統</button>
+            <h2>🔐 模擬選課系統登入</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">※ 首次登入將自動綁定帳號與密碼</p>
+            
+            <input type="text" id="username-input" placeholder="請輸入學號或帳號">
+            <input type="password" id="password-input" placeholder="請輸入密碼" onkeypress="if(event.key === 'Enter') performLogin()">
+            
+            <button onclick="performLogin()">登入 / 註冊</button>
+            
+            <a href="#" class="forgot-pwd-link" onclick="forgotPassword(); return false;">忘記密碼？點此重設</a>
         </div>
     </div>
 
@@ -137,7 +146,8 @@
                     <thead>
                         <tr>
                             <th class="col-action">操作</th>
-                            <th class="col-enroll">人數</th> <th class="col-class">班級名稱</th>
+                            <th class="col-enroll">人數</th> 
+                            <th class="col-class">班級名稱</th>
                             <th class="col-course">課程名稱</th>
                             <th class="col-required">必/選修</th>
                             <th class="col-credit">學分 / 時數</th>
@@ -158,20 +168,24 @@
         let allCoursesData = [];
         let mySchedule = [];
         let currentUser = null;
-        const MAX_CAPACITY = 2; // ✨ 設定課堂人數上限為 2 人
+        const MAX_CAPACITY = 2; // 設定課堂人數上限為 2 人
 
         // ==========================================
-        // ✨ 虛擬資料庫 (模擬後端)
+        // 虛擬資料庫 (升級版：支援帳號密碼儲存)
         // ==========================================
         function getDatabase() {
-            let db = localStorage.getItem('schoolDB');
-            if (!db) {
-                // 初始化資料庫結構
-                db = { enrollments: {}, userSchedules: {} }; 
+            let dbStr = localStorage.getItem('schoolDB');
+            let db;
+            if (!dbStr) {
+                // 初始化資料庫結構，新增 users 物件
+                db = { users: {}, enrollments: {}, userSchedules: {} }; 
                 localStorage.setItem('schoolDB', JSON.stringify(db));
-                return db;
+            } else {
+                db = JSON.parse(dbStr);
+                // 相容舊資料：如果之前沒有 users 結構，補上去
+                if (!db.users) { db.users = {}; localStorage.setItem('schoolDB', JSON.stringify(db)); }
             }
-            return JSON.parse(db);
+            return db;
         }
 
         function saveDatabase(db) {
@@ -179,19 +193,43 @@
         }
 
         // ==========================================
-        // ✨ 登入系統邏輯
+        // ✨ 登入系統邏輯 (含密碼驗證)
         // ==========================================
         function performLogin() {
             const username = document.getElementById('username-input').value.trim();
-            if (!username) { alert('請輸入學號或姓名！'); return; }
+            const password = document.getElementById('password-input').value.trim();
             
+            if (!username || !password) { 
+                alert('⚠️ 帳號與密碼均不可為空！'); 
+                return; 
+            }
+            
+            let db = getDatabase();
+
+            // 判斷帳號是否存在
+            if (db.users[username]) {
+                // 帳號已存在，檢查密碼
+                if (db.users[username] !== password) {
+                    alert('❌ 密碼錯誤，請重新輸入！');
+                    document.getElementById('password-input').value = ''; // 清空密碼框
+                    return;
+                }
+            } else {
+                // 帳號不存在，自動註冊並儲存密碼
+                db.users[username] = password;
+                saveDatabase(db);
+                alert(`✅ 歡迎！已為您註冊新帳號：${username}`);
+            }
+
+            // 登入成功後續動作
             currentUser = username;
+            document.getElementById('username-input').value = '';
+            document.getElementById('password-input').value = '';
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('user-info-bar').style.display = 'flex';
             document.getElementById('current-user-display').innerText = `👤 目前登入：${currentUser}`;
 
             // 從資料庫載入使用者的課表
-            let db = getDatabase();
             if (!db.userSchedules[currentUser]) {
                 db.userSchedules[currentUser] = []; // 新用戶，給空課表
                 saveDatabase(db);
@@ -206,9 +244,34 @@
         function performLogout() {
             currentUser = null;
             mySchedule = [];
-            document.getElementById('username-input').value = '';
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('user-info-bar').style.display = 'none';
+        }
+
+        // ==========================================
+        // ✨ 忘記密碼邏輯
+        // ==========================================
+        function forgotPassword() {
+            const username = prompt('【重設密碼】\n請輸入您的學號或帳號：');
+            if (!username) return; // 使用者按取消或未輸入
+
+            let db = getDatabase();
+            
+            if (!db.users[username]) {
+                alert('❌ 找不到此帳號，請確認輸入是否正確。');
+                return;
+            }
+
+            const newPassword = prompt(`正在為帳號 [${username}] 重設密碼。\n請輸入您的新密碼：`);
+            if (!newPassword) return; // 使用者按取消或未輸入
+
+            // 覆寫新密碼
+            db.users[username] = newPassword;
+            saveDatabase(db);
+            
+            alert('✅ 密碼重設成功！請使用新密碼登入系統。');
+            document.getElementById('username-input').value = username; // 自動幫他填好帳號
+            document.getElementById('password-input').focus(); // 游標移到密碼框
         }
 
         // ==========================================
@@ -225,15 +288,13 @@
 
                 allCoursesData = filteredData;
                 populateDropdowns(allCoursesData);
-                // 初始不載入表格，等登入後再載入
             } catch (e) {
                 document.getElementById('course-list').innerHTML = `<tr><td colspan="9" style="color: red;">載入失敗: 請確定是否使用 Live Server 開啟！</td></tr>`;
             }
         }
 
         function getCredits(course) {
-            let parts = (course.hours_credit || '').split('-');
-            return (parts.length === 3) ? parseFloat(parts[2]) : 0;
+            let parts = (course.hours_credit || '').split('-'); return (parts.length === 3) ? parseFloat(parts[2]) : 0;
         }
 
         function extractTimes(sched) {
@@ -261,32 +322,22 @@
             else { statusDiv.innerHTML = `<span style="color: #28a745; font-weight: bold;">目前學分：${total} 學分 (✅ 符合規定)</span>`; }
         }
 
-        // ✨ 修改：加入資料庫寫入與人數檢查機制
         function addCourse(id) {
             const courseToAdd = allCoursesData.find(c => c.id === id);
             if (!courseToAdd) return;
-
             let db = getDatabase();
             let currentEnrolledUsers = db.enrollments[id] || [];
 
-            // 1. 檢查是否自己已選
             if (mySchedule.some(c => c.id === id)) { alert("您已經選過這堂課囉！"); return; }
-            
-            // 2. ✨ 檢查是否超過人數上限
-            if (currentEnrolledUsers.length >= MAX_CAPACITY) {
-                alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】選課人數已達上限 (${MAX_CAPACITY}人)！`);
-                return;
-            }
+            if (currentEnrolledUsers.length >= MAX_CAPACITY) { alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】選課人數已達上限 (${MAX_CAPACITY}人)！`); return; }
 
-            // 3. 檢查衝堂與學分
             const conflictCourseName = checkTimeConflict(courseToAdd);
             if (conflictCourseName) { alert(`⚠️ 無法加選！\n與已選的【${conflictCourseName}】衝堂了！`); return; }
             const newTotal = mySchedule.reduce((sum, c) => sum + getCredits(c), 0) + getCredits(courseToAdd);
             if (newTotal > 25) { alert(`❌ 無法加選！\n超過學校規定之 25 學分上限！`); return; }
             
-            // 4. 正式寫入記憶體與資料庫
             mySchedule.push(courseToAdd);
-            currentEnrolledUsers.push(currentUser); // 將使用者加入該課程名單
+            currentEnrolledUsers.push(currentUser); 
             
             db.userSchedules[currentUser] = mySchedule;
             db.enrollments[id] = currentEnrolledUsers;
@@ -294,19 +345,14 @@
 
             renderVisualSchedule(); 
             updateCreditStatus();
-            applyFilters(); // 重新渲染表格，讓大家看到人數變更
+            applyFilters(); 
         }
 
-        // ✨ 修改：退選時要從資料庫釋放名額
         function removeCourse(id) {
             mySchedule = mySchedule.filter(c => c.id !== id);
-            
             let db = getDatabase();
             db.userSchedules[currentUser] = mySchedule;
-            if (db.enrollments[id]) {
-                // 從選課名單中移除自己，釋放名額
-                db.enrollments[id] = db.enrollments[id].filter(user => user !== currentUser);
-            }
+            if (db.enrollments[id]) { db.enrollments[id] = db.enrollments[id].filter(user => user !== currentUser); }
             saveDatabase(db);
 
             renderVisualSchedule(); 
@@ -323,9 +369,7 @@
             ['週一', '週二', '週三', '週四', '週五', '週六'].forEach(day => grid.appendChild(createCell(day, 'grid-header')));
 
             const scheduleMap = new Map(); 
-            mySchedule.forEach(course => {
-                extractTimes(course.schedule).forEach(time => scheduleMap.set(`${time[0]}-${time[1]}`, course));
-            });
+            mySchedule.forEach(course => { extractTimes(course.schedule).forEach(time => scheduleMap.set(`${time[0]}-${time[1]}`, course)); });
 
             ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E'].forEach((pdKey, index) => {
                 grid.appendChild(createCell(`第 ${pdKey} 節`, 'period-cell'));
@@ -352,49 +396,29 @@
             let parts = (c.hours_credit || '').split('-');
             let creditDisplay = (parts.length === 3 && parts[2] !== '0.00') ? `<div class="nowrap"><span class="credit-badge">${parseFloat(parts[2])}學分</span> / ${parseFloat(parts[0])+parseFloat(parts[1])}小時</div>` : '<span style="color: #adb5bd;">待定</span>';
             
-            // ✨ 計算人數與按鈕狀態
             let enrolledUsers = db.enrollments[c.id] || [];
             let currentEnrollmentCount = enrolledUsers.length;
             let isFull = currentEnrollmentCount >= MAX_CAPACITY;
             let iAmEnrolled = enrolledUsers.includes(currentUser);
 
-            // 顯示狀態：已選(綠字) / 額滿(紅字) / 正常(藍字)
             let enrollDisplayColor = iAmEnrolled ? '#28a745' : (isFull ? '#dc3545' : '#0056b3');
             let enrollText = `<span style="color: ${enrollDisplayColor}; font-weight: bold;">${currentEnrollmentCount} / ${MAX_CAPACITY}</span>`;
 
-            // 動態產生按鈕
             let actionButton = '';
-            if (iAmEnrolled) {
-                actionButton = `<button class="add-btn" style="background-color: #6c757d; cursor: not-allowed;" disabled>✅ 已選</button>`;
-            } else if (isFull) {
-                actionButton = `<button class="full-btn" disabled>⛔ 額滿</button>`;
-            } else {
-                actionButton = `<button class="add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`;
-            }
+            if (iAmEnrolled) { actionButton = `<button class="add-btn" style="background-color: #6c757d; cursor: not-allowed;" disabled>✅ 已選</button>`; } 
+            else if (isFull) { actionButton = `<button class="full-btn" disabled>⛔ 額滿</button>`; } 
+            else { actionButton = `<button class="add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`; }
 
-            return `<tr>
-                <td>${actionButton}</td>
-                <td>${enrollText}</td>
-                <td>${getDisplay(c.class_name)}</td>
-                <td><strong>${getDisplay(c.course_name)}</strong></td>
-                <td>${getDisplay(c.required_elective)}</td>
-                <td>${creditDisplay}</td>
-                <td>${getDisplay(c.schedule)}</td>
-                <td>${getDisplay(c.teacher)}</td>
-                <td>${getDisplay(c.classroom)}</td>
-            </tr>`;
+            return `<tr><td>${actionButton}</td><td>${enrollText}</td><td>${getDisplay(c.class_name)}</td><td><strong>${getDisplay(c.course_name)}</strong></td><td>${getDisplay(c.required_elective)}</td><td>${creditDisplay}</td><td>${getDisplay(c.schedule)}</td><td>${getDisplay(c.teacher)}</td><td>${getDisplay(c.classroom)}</td></tr>`;
         }
 
         function renderTable(data) {
             const body = document.getElementById('course-list');
             if (data.length === 0) { body.innerHTML = '<tr><td colspan="9">查無符合條件的課程</td></tr>'; return; }
-            
-            // 取得最新資料庫狀態來算人數
             let db = getDatabase();
             body.innerHTML = data.map(c => generateTableRow(c, db)).join('');
         }
 
-        // 下拉選單與過濾邏輯...
         function populateDropdowns(data) {
             const classes = new Set(), courses = new Set(), requireds = new Set(), credits = new Set(), times = new Set(), teachers = new Set(), rooms = new Set();
             data.forEach(c => {
