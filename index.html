@@ -3,93 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>龍華科技大學 - 課表查詢與模擬選課系統</title>
+    <title>龍華科技大學 - 模擬選課系統 (可視化課表)</title>
     <style>
         body { font-family: "微軟正黑體", sans-serif; margin: 20px; background-color: #f8f9fa; }
-        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #0056b3; text-align: left; margin-bottom: 20px; }
+        .container { max-width: 1400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; }
+        h1 { color: #0056b3; text-align: left; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
+        /* ✨ 新增：登入畫面疊層 */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 300px; }
+        .login-box h2 { color: #0056b3; margin-top: 0; }
+        .login-box input { width: 100%; padding: 10px; margin: 15px 0; border: 1px solid #ced4da; border-radius: 5px; box-sizing: border-box; font-size: 16px; text-align: center; }
+        .login-box button { width: 100%; padding: 10px; background-color: #0056b3; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .login-box button:hover { background-color: #004494; }
+
+        /* ✨ 新增：使用者資訊列 */
+        .user-info-bar { display: none; justify-content: space-between; align-items: center; background: #e9ecef; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #0056b3; }
+        .user-info-bar span { font-size: 16px; font-weight: bold; color: #333; }
+        .logout-btn { background-color: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .logout-btn:hover { background-color: #c82333; }
+
         /* 篩選器樣式 */
         .filter-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 20px; background: #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
         .filter-group { display: flex; flex-direction: column; }
         .filter-group label { font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #495057; }
         .filter-group input { padding: 10px; border-radius: 5px; border: 1px solid #ced4da; font-size: 14px; height: 40px; box-sizing: border-box; }
         .btn-group { display: flex; gap: 10px; align-items: flex-end; height: 100%; }
-        button { height: 40px; flex: 1; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 14px; }
-        .search-btn { background-color: #0056b3; } .search-btn:hover { background-color: #004494; }
-        .reset-btn { background-color: #6c757d; } .reset-btn:hover { background-color: #5a6268; }
+        button.search-btn { height: 40px; flex: 1; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 5px; background-color: #0056b3; }
+        button.search-btn:hover { background-color: #004494; }
+        button.reset-btn { height: 40px; flex: 1; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 5px; background-color: #6c757d; }
+        button.reset-btn:hover { background-color: #5a6268; }
         
-        /* 我的課表專區樣式 */
+        /* 可視化課表專區樣式 */
         .my-schedule-panel { background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px solid #90caf9; }
-        .my-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .my-schedule-header h2 { margin: 0; color: #0d47a1; font-size: 20px; }
+        .my-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .my-schedule-header h2 { margin: 0; color: #0d47a1; font-size: 20px; display: flex; align-items: center; gap: 8px; }
         #credit-status { font-size: 16px; background: white; padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        .visual-timetable-container { width: 100%; overflow-x: auto; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(75px, auto)); gap: 1px; background-color: #dee2e6; border: 1px solid #dee2e6; border-radius: 5px; min-width: 900px; }
+        .grid-header { background-color: #e3f2fd; color: #0d47a1; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 15px; }
+        .period-cell { background-color: #f1f8e9; color: #33691e; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+        .empty-cell { background-color: white; }
+
+        .course-block { background-color: #90caf9; color: #0d47a1; padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-left: 5px solid #1565c0; overflow: hidden; word-break: break-all; }
+        .course-block:hover { background-color: #64b5f6; }
+        .course-details { flex-grow: 1; }
+        .course-title { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; }
+        .course-room { font-size: 11px; font-style: italic; color: #555; margin-top: auto; }
+        .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #d9534f; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5; transition: opacity 0.3s; }
+        .course-block-remove:hover { opacity: 1; color: #c82333; }
+
         /* 表格樣式 */
+        .all-courses-panel { margin-top: 30px; }
+        .all-courses-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .all-courses-header h2 { margin: 0; color: #0056b3; font-size: 18px; }
+
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { border-collapse: collapse; width: 100%; margin-top: 10px; table-layout: fixed; word-wrap: break-word; min-width: 900px; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; word-wrap: break-word; min-width: 950px; background: white; }
         th, td { border: 1px solid #dee2e6; padding: 10px 8px; text-align: center; font-size: 14px; vertical-align: middle; }
         th { background-color: #0056b3; color: white; font-weight: bold; }
-        .my-schedule-panel th { background-color: #1565c0; }
         
         .col-action   { width: 8%; }
-        .col-class    { width: 15%; }
-        .col-course   { width: 22%; }
-        .col-required { width: 8%; }
+        .col-enroll   { width: 7%; } /* ✨ 新增：選課人數欄位 */
+        .col-class    { width: 13%; }
+        .col-course   { width: 20%; }
+        .col-required { width: 7%; }
         .col-credit   { width: 12%; }
-        .col-time     { width: 12%; }
-        .col-teacher  { width: 10%; }
+        .col-time     { width: 11%; }
+        .col-teacher  { width: 9%; }
         .col-room     { width: 13%; }
 
         .nowrap { white-space: nowrap; }
         .credit-badge { color: #d9534f; font-weight: bold; }
         
-        /* 按鈕樣式 */
-        .add-btn { background-color: #28a745; height: 32px; font-size: 13px; }
+        .add-btn { background-color: #28a745; color: white; border: none; height: 32px; font-size: 13px; padding: 0 10px; border-radius: 5px; cursor: pointer; }
         .add-btn:hover { background-color: #218838; }
-        .remove-btn { background-color: #dc3545; height: 32px; font-size: 13px; }
-        .remove-btn:hover { background-color: #c82333; }
+        .full-btn { background-color: #dc3545; color: white; border: none; height: 32px; font-size: 13px; padding: 0 10px; border-radius: 5px; cursor: not-allowed; opacity: 0.8; }
 
         tr:nth-child(even) { background-color: #f9f9f9; }
         tr:hover { background-color: #f1f4f9; }
-
-        /* 手機版排版 */
-        @media (max-width: 768px) {
-            .filter-panel { grid-template-columns: 1fr; padding: 15px; }
-            .btn-group { flex-direction: column; margin-top: 5px; }
-            button { width: 100%; margin-bottom: 5px; }
-            .my-schedule-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-        }
     </style>
 </head>
 <body>
 
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>🔐 模擬選課登入</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 15px;">免註冊，直接輸入帳號即可建立專屬課表</p>
+            <input type="text" id="username-input" placeholder="請輸入學號或姓名" onkeypress="if(event.key === 'Enter') performLogin()">
+            <button onclick="performLogin()">進入系統</button>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>🏫 龍華科技大學 模擬選課系統</h1>
+        <h1><span>🏫</span> 龍華科技大學 模擬選課系統</h1>
+
+        <div class="user-info-bar" id="user-info-bar">
+            <span id="current-user-display">目前登入：無</span>
+            <button class="logout-btn" onclick="performLogout()">登出系統</button>
+        </div>
 
         <div class="my-schedule-panel">
             <div class="my-schedule-header">
-                <h2>🎒 我的專屬課表</h2>
+                <h2><span>🎒</span> 我的專屬課表</h2>
                 <div id="credit-status"><span style="color: #d9534f; font-weight: bold;">目前學分：0 學分 (⚠️ 低於下限 16 學分)</span></div>
             </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="col-action">操作</th>
-                            <th class="col-class">班級名稱</th>
-                            <th class="col-course">課程名稱</th>
-                            <th class="col-required">必/選修</th>
-                            <th class="col-credit">學分 / 時數</th>
-                            <th class="col-time">上課時間</th>
-                            <th class="col-teacher">授課教師</th>
-                            <th class="col-room">教室</th>
-                        </tr>
-                    </thead>
-                    <tbody id="my-course-list">
-                        <tr><td colspan="8" style="color: #6c757d;">尚未選取任何課程，請從下方搜尋並加入。</td></tr>
-                    </tbody>
-                </table>
+            <div class="visual-timetable-container">
+                <div class="timetable-grid" id="visual-grid"></div>
             </div>
         </div>
         
@@ -97,8 +118,8 @@
             <div class="filter-group"><label>班級名稱</label><input type="text" id="sel-class" list="list-class" placeholder="請選擇或輸入班級"><datalist id="list-class"></datalist></div>
             <div class="filter-group"><label>課程名稱</label><input type="text" id="sel-course" list="list-course" placeholder="請選擇或輸入課程"><datalist id="list-course"></datalist></div>
             <div class="filter-group"><label>必/選修</label><input type="text" id="sel-required" list="list-required" placeholder="請選擇或輸入必/選修"><datalist id="list-required"></datalist></div>
-            <div class="filter-group"><label>學分/時數</label><input type="text" id="sel-credit" list="list-credit" placeholder="請選擇或輸入學分數"><datalist id="list-credit"></datalist></div>
-            <div class="filter-group"><label>上課時間</label><input type="text" id="sel-time" list="list-time" placeholder="請選擇或輸入時間"><datalist id="list-time"></datalist></div>
+            <div class="filter-group"><label>學分數</label><input type="text" id="sel-credit" list="list-credit" placeholder="請選擇學分數"><datalist id="list-credit"></datalist></div>
+            <div class="filter-group"><label>上課時間</label><input type="text" id="sel-time" list="list-time" placeholder="請選擇時間 (如 11)"><datalist id="list-time"></datalist></div>
             <div class="filter-group"><label>授課教師</label><input type="text" id="sel-teacher" list="list-teacher" placeholder="請選擇或輸入教師"><datalist id="list-teacher"></datalist></div>
             <div class="filter-group"><label>教室</label><input type="text" id="sel-room" list="list-room" placeholder="請選擇或輸入教室"><datalist id="list-room"></datalist></div>
             <div class="btn-group">
@@ -107,182 +128,253 @@
             </div>
         </div>
 
-        <h2 style="color: #0056b3; font-size: 18px; margin-top: 30px;">🔎 全校課程列表</h2>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-action">操作</th>
-                        <th class="col-class">班級名稱</th>
-                        <th class="col-course">課程名稱</th>
-                        <th class="col-required">必/選修</th>
-                        <th class="col-credit">學分 / 時數</th>
-                        <th class="col-time">上課時間</th>
-                        <th class="col-teacher">授課教師</th>
-                        <th class="col-room">教室</th>
-                    </tr>
-                </thead>
-                <tbody id="course-list">
-                    <tr><td colspan="8">資料載入中，請稍後... ⏳</td></tr>
-                </tbody>
-            </table>
+        <div class="all-courses-panel">
+            <div class="all-courses-header">
+                <h2><span>🔎</span> 全校課程列表</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-action">操作</th>
+                            <th class="col-enroll">人數</th> <th class="col-class">班級名稱</th>
+                            <th class="col-course">課程名稱</th>
+                            <th class="col-required">必/選修</th>
+                            <th class="col-credit">學分 / 時數</th>
+                            <th class="col-time">上課時間</th>
+                            <th class="col-teacher">授課教師</th>
+                            <th class="col-room">教室</th>
+                        </tr>
+                    </thead>
+                    <tbody id="course-list">
+                        <tr><td colspan="9">資料載入中，請稍後... ⏳</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
         let allCoursesData = [];
-        let mySchedule = []; // ✨ 存放使用者選的課
+        let mySchedule = [];
+        let currentUser = null;
+        const MAX_CAPACITY = 2; // ✨ 設定課堂人數上限為 2 人
 
+        // ==========================================
+        // ✨ 虛擬資料庫 (模擬後端)
+        // ==========================================
+        function getDatabase() {
+            let db = localStorage.getItem('schoolDB');
+            if (!db) {
+                // 初始化資料庫結構
+                db = { enrollments: {}, userSchedules: {} }; 
+                localStorage.setItem('schoolDB', JSON.stringify(db));
+                return db;
+            }
+            return JSON.parse(db);
+        }
+
+        function saveDatabase(db) {
+            localStorage.setItem('schoolDB', JSON.stringify(db));
+        }
+
+        // ==========================================
+        // ✨ 登入系統邏輯
+        // ==========================================
+        function performLogin() {
+            const username = document.getElementById('username-input').value.trim();
+            if (!username) { alert('請輸入學號或姓名！'); return; }
+            
+            currentUser = username;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('user-info-bar').style.display = 'flex';
+            document.getElementById('current-user-display').innerText = `👤 目前登入：${currentUser}`;
+
+            // 從資料庫載入使用者的課表
+            let db = getDatabase();
+            if (!db.userSchedules[currentUser]) {
+                db.userSchedules[currentUser] = []; // 新用戶，給空課表
+                saveDatabase(db);
+            }
+            mySchedule = db.userSchedules[currentUser];
+
+            renderVisualSchedule();
+            updateCreditStatus();
+            applyFilters(); // 重新渲染表格以更新人數狀態
+        }
+
+        function performLogout() {
+            currentUser = null;
+            mySchedule = [];
+            document.getElementById('username-input').value = '';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('user-info-bar').style.display = 'none';
+        }
+
+        // ==========================================
+        // 初始化與選課邏輯
+        // ==========================================
         async function init() {
             try {
                 const response = await fetch('./courses.json');
                 const data = await response.json();
-                
-                let filteredData = data.filter(c => 
-                    (c.class_name && c.class_name.toString().length >= 2) || 
-                    (c.course_name && c.course_name.toString().length >= 2)
-                );
+                if (data.error) throw new Error(data.error);
 
-                filteredData.sort((a, b) => {
-                    const classA = (a.class_name || "").toString();
-                    const classB = (b.class_name || "").toString();
-                    return classA.localeCompare(classB, 'zh-Hant');
-                });
+                let filteredData = data.filter(c => (c.class_name && c.class_name.toString().length >= 2) || (c.course_name && c.course_name.toString().length >= 2));
+                filteredData.sort((a, b) => (a.class_name || "").toString().localeCompare((b.class_name || "").toString(), 'zh-Hant'));
 
                 allCoursesData = filteredData;
                 populateDropdowns(allCoursesData);
-                renderTable(allCoursesData);
+                // 初始不載入表格，等登入後再載入
             } catch (e) {
-                document.getElementById('course-list').innerHTML = `<tr><td colspan="8" style="color: red;">載入失敗: 請確定是否使用 Live Server 開啟！</td></tr>`;
+                document.getElementById('course-list').innerHTML = `<tr><td colspan="9" style="color: red;">載入失敗: 請確定是否使用 Live Server 開啟！</td></tr>`;
             }
         }
 
-        // ==========================================
-        // ✨ 選課核心邏輯區
-        // ==========================================
-
-        // 取得單堂課的學分數
         function getCredits(course) {
             let parts = (course.hours_credit || '').split('-');
             return (parts.length === 3) ? parseFloat(parts[2]) : 0;
         }
 
-        // 檢查衝堂 (比對兩兩一組的時間碼，例如 18, 19)
+        function extractTimes(sched) {
+            if (!sched || sched === '00' || sched === 'null') return [];
+            let times = []; const schedStr = sched.toString();
+            for(let i=0; i<schedStr.length; i+=2) { if(schedStr.substring(i, i+2)) times.push(schedStr.substring(i, i+2)); }
+            return times;
+        };
+
         function checkTimeConflict(newCourse) {
-            if (!newCourse.schedule || newCourse.schedule === '00' || newCourse.schedule === 'null') return false;
-            
-            // 把時間字串切成兩碼一組的陣列 (例如 "1819" -> ["18", "19"])
-            const extractTimes = (sched) => {
-                let times = [];
-                for(let i=0; i<sched.length; i+=2) {
-                    if(sched.substring(i, i+2)) times.push(sched.substring(i, i+2));
-                }
-                return times;
-            };
-
-            const newTimes = extractTimes(newCourse.schedule.toString());
-
+            const newTimes = extractTimes(newCourse.schedule);
+            if (newTimes.length === 0) return false;
             for (let myCourse of mySchedule) {
-                if (!myCourse.schedule || myCourse.schedule === '00' || myCourse.schedule === 'null') continue;
-                const existingTimes = extractTimes(myCourse.schedule.toString());
-                
-                // 檢查是否有重疊的時間碼
-                const isConflict = newTimes.some(time => existingTimes.includes(time));
-                if (isConflict) {
-                    return myCourse.course_name; // 回傳衝堂的課名
-                }
+                const isConflict = newTimes.some(time => extractTimes(myCourse.schedule).includes(time));
+                if (isConflict) return myCourse.course_name;
             }
             return false;
         }
 
-        // 更新學分狀態並檢查上下限
         function updateCreditStatus() {
             let total = mySchedule.reduce((sum, c) => sum + getCredits(c), 0);
             let statusDiv = document.getElementById('credit-status');
-            
-            if (total < 16) {
-                statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (⚠️ 低於下限，尚缺 ${16 - total} 學分)</span>`;
-            } else if (total > 25) {
-                statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (❌ 已超過上限 25 學分)</span>`;
-            } else {
-                statusDiv.innerHTML = `<span style="color: #28a745; font-weight: bold;">目前學分：${total} 學分 (✅ 符合選課規定)</span>`;
-            }
-            return total;
+            if (total < 16) { statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (⚠️ 低於下限，尚缺 ${16 - total} 學分)</span>`; }
+            else if (total > 25) { statusDiv.innerHTML = `<span style="color: #d9534f; font-weight: bold;">目前學分：${total} 學分 (❌ 已超過上限 25 學分)</span>`; }
+            else { statusDiv.innerHTML = `<span style="color: #28a745; font-weight: bold;">目前學分：${total} 學分 (✅ 符合規定)</span>`; }
         }
 
-        // 加入課程
+        // ✨ 修改：加入資料庫寫入與人數檢查機制
         function addCourse(id) {
             const courseToAdd = allCoursesData.find(c => c.id === id);
             if (!courseToAdd) return;
 
-            // 1. 檢查是否已經選過
-            if (mySchedule.some(c => c.id === id)) {
-                alert("您已經選過這堂課囉！");
+            let db = getDatabase();
+            let currentEnrolledUsers = db.enrollments[id] || [];
+
+            // 1. 檢查是否自己已選
+            if (mySchedule.some(c => c.id === id)) { alert("您已經選過這堂課囉！"); return; }
+            
+            // 2. ✨ 檢查是否超過人數上限
+            if (currentEnrolledUsers.length >= MAX_CAPACITY) {
+                alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】選課人數已達上限 (${MAX_CAPACITY}人)！`);
                 return;
             }
 
-            // 2. 檢查衝堂
+            // 3. 檢查衝堂與學分
             const conflictCourseName = checkTimeConflict(courseToAdd);
-            if (conflictCourseName) {
-                alert(`⚠️ 無法加選！\n【${courseToAdd.course_name}】的上課時間與您已選的【${conflictCourseName}】衝堂了！`);
-                return;
-            }
-
-            // 3. 檢查學分上限 (加入後是否超過25)
-            const currentTotal = mySchedule.reduce((sum, c) => sum + getCredits(c), 0);
-            const newTotal = currentTotal + getCredits(courseToAdd);
-            if (newTotal > 25) {
-                alert(`❌ 無法加選！\n加選後為 ${newTotal} 學分，超過學校規定之 25 學分上限！`);
-                return;
-            }
-
-            // 檢查通過，加入我的課表
+            if (conflictCourseName) { alert(`⚠️ 無法加選！\n與已選的【${conflictCourseName}】衝堂了！`); return; }
+            const newTotal = mySchedule.reduce((sum, c) => sum + getCredits(c), 0) + getCredits(courseToAdd);
+            if (newTotal > 25) { alert(`❌ 無法加選！\n超過學校規定之 25 學分上限！`); return; }
+            
+            // 4. 正式寫入記憶體與資料庫
             mySchedule.push(courseToAdd);
-            renderMySchedule();
+            currentEnrolledUsers.push(currentUser); // 將使用者加入該課程名單
+            
+            db.userSchedules[currentUser] = mySchedule;
+            db.enrollments[id] = currentEnrolledUsers;
+            saveDatabase(db);
+
+            renderVisualSchedule(); 
             updateCreditStatus();
+            applyFilters(); // 重新渲染表格，讓大家看到人數變更
         }
 
-        // 移除課程
+        // ✨ 修改：退選時要從資料庫釋放名額
         function removeCourse(id) {
             mySchedule = mySchedule.filter(c => c.id !== id);
-            renderMySchedule();
-            updateCreditStatus();
-        }
-
-        // 渲染我的課表
-        function renderMySchedule() {
-            const body = document.getElementById('my-course-list');
-            if (mySchedule.length === 0) {
-                body.innerHTML = '<tr><td colspan="8" style="color: #6c757d;">尚未選取任何課程，請從下方搜尋並加入。</td></tr>';
-                return;
+            
+            let db = getDatabase();
+            db.userSchedules[currentUser] = mySchedule;
+            if (db.enrollments[id]) {
+                // 從選課名單中移除自己，釋放名額
+                db.enrollments[id] = db.enrollments[id].filter(user => user !== currentUser);
             }
-            body.innerHTML = mySchedule.map(c => generateTableRow(c, true)).join('');
+            saveDatabase(db);
+
+            renderVisualSchedule(); 
+            updateCreditStatus();
+            applyFilters(); 
         }
 
         // ==========================================
-        // 原有共用功能區 (過濾與渲染)
+        // 可視化課表與表格渲染
         // ==========================================
+        function renderVisualSchedule() {
+            const grid = document.getElementById('visual-grid'); grid.innerHTML = ''; 
+            grid.appendChild(createCell('節 / 週', 'grid-header'));
+            ['週一', '週二', '週三', '週四', '週五', '週六'].forEach(day => grid.appendChild(createCell(day, 'grid-header')));
+
+            const scheduleMap = new Map(); 
+            mySchedule.forEach(course => {
+                extractTimes(course.schedule).forEach(time => scheduleMap.set(`${time[0]}-${time[1]}`, course));
+            });
+
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E'].forEach((pdKey, index) => {
+                grid.appendChild(createCell(`第 ${pdKey} 節`, 'period-cell'));
+                for (let day = 1; day <= 6; day++) {
+                    const course = scheduleMap.get(`${day}-${pdKey}`);
+                    grid.appendChild(course ? createCourseBlock(course, day, index + 1) : createCell('', 'empty-cell'));
+                }
+            });
+        }
+
+        function createCell(text, className) { const cell = document.createElement('div'); cell.className = className; cell.textContent = text; return cell; }
+        
+        function createCourseBlock(course, day, periodIndex) {
+            const block = document.createElement('div'); block.className = 'course-block'; block.style.gridColumn = day + 1; block.style.gridRow = periodIndex + 1; 
+            block.innerHTML = `<div class="course-details"><div class="course-title">${course.course_name}</div><div style="font-size: 11px;">${cleanSymbols(course.class_name)} / ${cleanSymbols(course.teacher)}</div><div class="course-room">${cleanSymbols(course.classroom) || '待定'}</div></div>`;
+            const removeBtn = document.createElement('button'); removeBtn.className = 'course-block-remove'; removeBtn.innerHTML = '❌'; removeBtn.onclick = () => removeCourse(course.id);
+            block.appendChild(removeBtn); return block;
+        }
 
         function cleanSymbols(str) { return (str || '').toString().replace(/\s*[,，/;；]\s*/g, '、').trim(); }
 
-        function generateTableRow(c, isMySchedule = false) {
-            const getDisplay = (val) => {
-                const str = (val || '').toString().trim();
-                if (str === '' || str === 'null' || str === '0' || str === '00') return '<span style="color: #adb5bd; font-style: italic;">待定</span>';
-                return cleanSymbols(str);
-            };
+        function generateTableRow(c, db) {
+            const getDisplay = (val) => { const str = (val || '').toString().trim(); return (str === '' || str === 'null' || str === '0' || str === '00') ? '<span style="color: #adb5bd; font-style: italic;">待定</span>' : cleanSymbols(str); };
             let parts = (c.hours_credit || '').split('-');
-            let creditDisplay = (parts.length === 3 && parts[2] !== '0.00') ? 
-                `<div class="nowrap"><span class="credit-badge">${parseFloat(parts[2])}學分</span> / ${parseFloat(parts[0])+parseFloat(parts[1])}小時</div>` : 
-                '<span style="color: #adb5bd;">待定</span>';
+            let creditDisplay = (parts.length === 3 && parts[2] !== '0.00') ? `<div class="nowrap"><span class="credit-badge">${parseFloat(parts[2])}學分</span> / ${parseFloat(parts[0])+parseFloat(parts[1])}小時</div>` : '<span style="color: #adb5bd;">待定</span>';
             
-            // 判斷按鈕要是「加入」還是「移除」
-            let actionButton = isMySchedule ? 
-                `<button class="remove-btn" onclick="removeCourse(${c.id})">❌ 移除</button>` :
-                `<button class="add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`;
+            // ✨ 計算人數與按鈕狀態
+            let enrolledUsers = db.enrollments[c.id] || [];
+            let currentEnrollmentCount = enrolledUsers.length;
+            let isFull = currentEnrollmentCount >= MAX_CAPACITY;
+            let iAmEnrolled = enrolledUsers.includes(currentUser);
+
+            // 顯示狀態：已選(綠字) / 額滿(紅字) / 正常(藍字)
+            let enrollDisplayColor = iAmEnrolled ? '#28a745' : (isFull ? '#dc3545' : '#0056b3');
+            let enrollText = `<span style="color: ${enrollDisplayColor}; font-weight: bold;">${currentEnrollmentCount} / ${MAX_CAPACITY}</span>`;
+
+            // 動態產生按鈕
+            let actionButton = '';
+            if (iAmEnrolled) {
+                actionButton = `<button class="add-btn" style="background-color: #6c757d; cursor: not-allowed;" disabled>✅ 已選</button>`;
+            } else if (isFull) {
+                actionButton = `<button class="full-btn" disabled>⛔ 額滿</button>`;
+            } else {
+                actionButton = `<button class="add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`;
+            }
 
             return `<tr>
                 <td>${actionButton}</td>
+                <td>${enrollText}</td>
                 <td>${getDisplay(c.class_name)}</td>
                 <td><strong>${getDisplay(c.course_name)}</strong></td>
                 <td>${getDisplay(c.required_elective)}</td>
@@ -295,40 +387,36 @@
 
         function renderTable(data) {
             const body = document.getElementById('course-list');
-            if (data.length === 0) {
-                body.innerHTML = '<tr><td colspan="8">查無符合條件的課程</td></tr>';
-                return;
-            }
-            body.innerHTML = data.map(c => generateTableRow(c, false)).join('');
+            if (data.length === 0) { body.innerHTML = '<tr><td colspan="9">查無符合條件的課程</td></tr>'; return; }
+            
+            // 取得最新資料庫狀態來算人數
+            let db = getDatabase();
+            body.innerHTML = data.map(c => generateTableRow(c, db)).join('');
         }
 
-        // 下拉選單與過濾器邏輯 (保持不變)
+        // 下拉選單與過濾邏輯...
         function populateDropdowns(data) {
             const classes = new Set(), courses = new Set(), requireds = new Set(), credits = new Set(), times = new Set(), teachers = new Set(), rooms = new Set();
             data.forEach(c => {
-                if (c.class_name) classes.add(c.class_name.trim());
-                if (c.course_name) courses.add(c.course_name.trim());
-                if (c.required_elective) requireds.add(c.required_elective.trim());
-                if (c.schedule) times.add(c.schedule.trim());
+                if (c.class_name) classes.add(c.class_name.trim()); if (c.course_name) courses.add(c.course_name.trim());
+                if (c.required_elective) requireds.add(c.required_elective.trim()); 
+                if (c.schedule && c.schedule !== '00' && c.schedule !== 'null') {
+                    const schedStr = c.schedule.toString().trim();
+                    for(let i=0; i<schedStr.length; i+=2) { const timeCode = schedStr.substring(i, i+2); if(timeCode) times.add(timeCode); }
+                }
                 let tStr = cleanSymbols(c.teacher); if (tStr && tStr !== 'null') teachers.add(tStr);
                 let rStr = cleanSymbols(c.classroom); if (rStr && rStr !== 'null') rooms.add(rStr);
                 let parts = (c.hours_credit || '').split('-'); if (parts.length === 3) credits.add(parseFloat(parts[2]).toString());
             });
-            fillDatalist('list-class', [...classes].sort()); fillDatalist('list-course', [...courses].sort());
-            fillDatalist('list-required', [...requireds].sort()); fillDatalist('list-credit', [...credits].sort((a,b)=>a-b));
-            fillDatalist('list-time', [...times].sort()); fillDatalist('list-teacher', [...teachers].sort()); fillDatalist('list-room', [...rooms].sort());
+            fillDatalist('list-class', [...classes].sort()); fillDatalist('list-course', [...courses].sort()); fillDatalist('list-required', [...requireds].sort()); fillDatalist('list-credit', [...credits].sort((a,b)=>a-b)); fillDatalist('list-time', [...times].sort()); fillDatalist('list-teacher', [...teachers].sort()); fillDatalist('list-room', [...rooms].sort());
         }
 
-        function fillDatalist(id, arr) {
-            const el = document.getElementById(id); el.innerHTML = ''; 
-            arr.forEach(val => { let opt = document.createElement("option"); opt.value = val; el.appendChild(opt); });
-        }
+        function fillDatalist(id, arr) { const el = document.getElementById(id); el.innerHTML = ''; arr.forEach(val => { let opt = document.createElement("option"); opt.value = val; el.appendChild(opt); }); }
 
         function applyFilters() {
             const fClass = document.getElementById('sel-class').value.trim(); const fCourse = document.getElementById('sel-course').value.trim();
             const fRequired = document.getElementById('sel-required').value.trim(); const fCredit = document.getElementById('sel-credit').value.trim();
-            const fTime = document.getElementById('sel-time').value.trim(); const fTeacher = document.getElementById('sel-teacher').value.trim();
-            const fRoom = document.getElementById('sel-room').value.trim();
+            const fTime = document.getElementById('sel-time').value.trim(); const fTeacher = document.getElementById('sel-teacher').value.trim(); const fRoom = document.getElementById('sel-room').value.trim();
 
             const filtered = allCoursesData.filter(c => {
                 let parts = (c.hours_credit || '').split('-'); let cCredit = parts.length === 3 ? parseFloat(parts[2]).toString() : "";
