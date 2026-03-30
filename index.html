@@ -103,14 +103,19 @@
         #credit-status { font-size: 16px; background: var(--bg-container); padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         .visual-timetable-container { width: 100%; overflow-x: auto; background: var(--bg-container); padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(75px, auto)); gap: 1px; background-color: var(--grid-bg); border: 1px solid var(--grid-bg); border-radius: 5px; min-width: 900px; }
+        /* 💡 修正：將課表每列最小高度從 75px 加大到 105px，以容納更多課程資訊 */
+        .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(105px, auto)); gap: 1px; background-color: var(--grid-bg); border: 1px solid var(--grid-bg); border-radius: 5px; min-width: 900px; }
         .grid-header { background-color: var(--schedule-bg); color: var(--color-primary); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 15px; }
         .period-cell { background-color: var(--panel-bg); color: var(--text-main); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 14px; }
         .empty-cell { background-color: var(--empty-cell); }
-        .course-block { background-color: var(--course-bg); color: var(--course-text); padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: space-between; position: relative; border-left: 5px solid var(--course-border); overflow: hidden; }
+        
+        /* 💡 課表區塊樣式微調 */
+        .course-block { background-color: var(--course-bg); color: var(--course-text); padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; border-left: 5px solid var(--course-border); overflow: hidden; }
         .course-block:hover { background-color: var(--course-hover); }
-        .course-details { flex-grow: 1; }
-        .course-title { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: var(--course-title); }
+        .course-title { font-weight: bold; font-size: 13px; margin-bottom: 5px; color: var(--course-title); padding-right: 15px; line-height: 1.2; }
+        .course-info-list { font-size: 11px; line-height: 1.5; }
+        .course-info-list span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
         .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #ff5252; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.6; }
         .course-block-remove:hover { opacity: 1; color: #ff0000; }
 
@@ -243,11 +248,19 @@
             return (str || '').toString().replace(/\s*[,，/;；]\s*/g, '、').trim(); 
         }
 
+        // 幫未定資訊加上「待定」文字
+        function getSafeText(val) {
+            let s = cleanSymbols(val);
+            if (s === '' || s === 'null' || s === '0' || s === '00') return '待定';
+            return s;
+        }
+
         function getDatabase() {
             let dbStr = localStorage.getItem('schoolDB');
             let db = dbStr ? JSON.parse(dbStr) : { users: {}, enrollments: {}, waitlists: {}, userSchedules: {} };
             if (!db.users) db.users = {}; 
             if (!db.waitlists) db.waitlists = {}; 
+            if (!db.userSchedules) db.userSchedules = {};
             return db;
         }
         function saveDatabase(db) { localStorage.setItem('schoolDB', JSON.stringify(db)); }
@@ -298,12 +311,14 @@
         }
 
         function addCourse(id) {
-            const course = allCoursesData.find(c => c.id === id);
+            const course = allCoursesData.find(c => String(c.id) === String(id));
+            if (!course) { alert("找不到該課程資料！"); return; }
+            
             let db = getDatabase();
             let enrolled = db.enrollments[id] || [];
             let waitlist = db.waitlists[id] || [];
 
-            if (mySchedule.some(c => c.id === id) || waitlist.includes(currentUser)) { alert("已在清單中。"); return; }
+            if (mySchedule.some(c => String(c.id) === String(id)) || waitlist.includes(currentUser)) { alert("已在清單中。"); return; }
             const eli = checkEligibility(course, mySchedule);
             if (!eli.pass) { alert(eli.reason); return; }
 
@@ -326,14 +341,14 @@
             let db = getDatabase();
             db.waitlists[id] = (db.waitlists[id] || []).filter(u => u !== currentUser);
             db.enrollments[id] = (db.enrollments[id] || []).filter(u => u !== currentUser);
-            mySchedule = mySchedule.filter(c => c.id !== id);
+            mySchedule = mySchedule.filter(c => String(c.id) !== String(id));
             db.userSchedules[currentUser] = mySchedule;
             
             // 自動遞補
             let enrolled = db.enrollments[id] || [];
             let waitlist = db.waitlists[id] || [];
-            const course = allCoursesData.find(c => c.id === id);
-            while (enrolled.length < MAX_CAPACITY && waitlist.length > 0) {
+            const course = allCoursesData.find(c => String(c.id) === String(id));
+            while (enrolled.length < MAX_CAPACITY && waitlist.length > 0 && course) {
                 let next = waitlist.shift();
                 let nextSched = db.userSchedules[next] || [];
                 if (checkEligibility(course, nextSched).pass) {
@@ -364,8 +379,24 @@
                     if (c) {
                         const b = document.createElement('div'); b.className = 'course-block';
                         b.style.gridColumn = d + 1; b.style.gridRow = idx + 2;
-                        b.innerHTML = `<div class="course-details"><div class="course-title">${c.course_name}</div><div style="font-size:11px;">${c.class_name}</div></div>`;
-                        const r = document.createElement('button'); r.className = 'course-block-remove'; r.innerHTML = '❌'; r.onclick = () => removeCourse(c.id);
+                        
+                        // 💡 整理課程詳細資訊
+                        let cred = getCredits(c);
+                        let req = getSafeText(c.required_elective);
+                        let teacher = getSafeText(c.teacher);
+                        let room = getSafeText(c.classroom);
+                        let clsName = getSafeText(c.class_name);
+
+                        b.innerHTML = `
+                            <div class="course-title">${getSafeText(c.course_name)}</div>
+                            <div class="course-info-list">
+                                <span title="班級">🏫 ${clsName}</span>
+                                <span title="選/必修 與 學分">🏷️ ${req} (${cred}學分)</span>
+                                <span title="授課教師">👨‍🏫 ${teacher}</span>
+                                <span title="教室">📍 ${room}</span>
+                            </div>
+                        `;
+                        const r = document.createElement('button'); r.className = 'course-block-remove'; r.innerHTML = '❌'; r.onclick = () => removeCourse(`'${c.id}'`);
                         b.appendChild(r); grid.appendChild(b);
                     } else { grid.appendChild(createCell('', 'empty-cell')); }
                 }
@@ -374,14 +405,6 @@
         function createCell(t, n) { const c = document.createElement('div'); c.className = n; c.textContent = t; return c; }
 
         function generateTableRow(c, db) {
-            const getD = (v) => {
-                const str = cleanSymbols(v);
-                if (str === '' || str === 'null' || str === '0' || str === '00') {
-                    return '<span style="color:var(--color-pending); font-style:italic;">待定</span>';
-                }
-                return str;
-            };
-            
             let parts = (c.hours_credit || '').split('-');
             let creditHtml = '<span style="color:var(--color-pending); font-style:italic;">待定</span>';
             if (parts.length === 3) {
@@ -399,23 +422,29 @@
             let isFull = enr.length >= MAX_CAPACITY;
 
             let btn = '';
-            if (isEnr) btn = `<button class="btn-base remove-table-btn" onclick="removeCourse(${c.id})">❌ 退選</button>`;
-            else if (isWait) btn = `<button class="btn-base cancel-wait-btn" onclick="removeCourse(${c.id})">取消候補 (#${wait.indexOf(currentUser)+1})</button>`;
-            else if (isFull) btn = wait.length >= MAX_WAITLIST ? `<button class="btn-base full-btn" disabled>⛔ 額滿</button>` : `<button class="btn-base wait-btn" onclick="addCourse(${c.id})">📝 候補</button>`;
-            else btn = `<button class="btn-base add-btn" onclick="addCourse(${c.id})">➕ 加入</button>`;
+            if (isEnr) btn = `<button class="btn-base remove-table-btn" onclick="removeCourse('${c.id}')">❌ 退選</button>`;
+            else if (isWait) btn = `<button class="btn-base cancel-wait-btn" onclick="removeCourse('${c.id}')">取消候補 (#${wait.indexOf(currentUser)+1})</button>`;
+            else if (isFull) btn = wait.length >= MAX_WAITLIST ? `<button class="btn-base full-btn" disabled>⛔ 額滿</button>` : `<button class="btn-base wait-btn" onclick="addCourse('${c.id}')">📝 候補</button>`;
+            else btn = `<button class="btn-base add-btn" onclick="addCourse('${c.id}')">➕ 加入</button>`;
 
             let statusColor = isEnr ? 'var(--color-success)' : (isFull ? 'var(--color-danger)' : 'var(--color-primary)');
+
+            // 調整表格內的待定顯示
+            const formatCell = (val) => {
+                let s = getSafeText(val);
+                return s === '待定' ? `<span style="color:var(--color-pending); font-style:italic;">待定</span>` : s;
+            };
 
             return `<tr>
                 <td>${btn}</td>
                 <td><b style="color:${statusColor}">${enr.length}/${MAX_CAPACITY}</b>${wait.length?`<br><small style="color:var(--text-muted)">候補:${wait.length}</small>`:''}</td>
-                <td>${getD(c.class_name)}</td>
-                <td><b>${getD(c.course_name)}</b></td>
-                <td>${getD(c.required_elective)}</td>
+                <td>${formatCell(c.class_name)}</td>
+                <td><b>${formatCell(c.course_name)}</b></td>
+                <td>${formatCell(c.required_elective)}</td>
                 <td>${creditHtml}</td>
-                <td>${getD(c.schedule)}</td>
-                <td>${getD(c.teacher)}</td>
-                <td>${getD(c.classroom)}</td>
+                <td>${formatCell(c.schedule)}</td>
+                <td>${formatCell(c.teacher)}</td>
+                <td>${formatCell(c.classroom)}</td>
             </tr>`;
         }
 
@@ -426,7 +455,7 @@
         }
 
         async function init() {
-            loadTheme(); // 初始化時讀取主題設定
+            loadTheme();
             try {
                 const res = await fetch('./courses.json');
                 const data = await res.json();
