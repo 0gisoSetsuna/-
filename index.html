@@ -98,9 +98,14 @@
         
         /* 課表樣式 */
         .my-schedule-panel { background: var(--schedule-bg); padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px solid var(--schedule-border); }
-        .my-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .my-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .my-schedule-header h2 { margin: 0; color: var(--color-primary); font-size: 20px; }
-        #credit-status { font-size: 16px; background: var(--bg-container); padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* 💡 新增的學分統計區塊樣式 */
+        #credit-status { display: flex; align-items: center; background: var(--bg-container); padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
+        .credit-divider { width: 2px; height: 20px; background-color: var(--border-color); display: inline-block; }
+        .credit-details { display: flex; gap: 15px; font-size: 14px; color: var(--text-muted); }
+        .credit-details span strong { color: var(--text-main); font-size: 15px; }
 
         .visual-timetable-container { width: 100%; overflow-x: auto; background: var(--bg-container); padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(105px, auto)); gap: 1px; background-color: var(--grid-bg); border: 1px solid var(--grid-bg); border-radius: 5px; min-width: 900px; }
@@ -169,7 +174,8 @@
         <div class="my-schedule-panel">
             <div class="my-schedule-header">
                 <h2><span>🎒</span> 我的專屬課表</h2>
-                <div id="credit-status"><span style="color: var(--color-danger); font-weight: bold;">目前學分：0 學分</span></div>
+                <div id="credit-status">
+                    </div>
             </div>
             <div class="visual-timetable-container">
                 <div class="timetable-grid" id="visual-grid"></div>
@@ -294,11 +300,39 @@
             return { pass: true };
         }
 
+        // 💡 更新：計算總學分，並拆分必修/選修/選必
         function updateCreditStatus() {
-            let total = mySchedule.reduce((sum, c) => sum + getCredits(c), 0);
+            let total = 0;
+            let reqCredits = 0;    // 必修
+            let eleCredits = 0;    // 選修
+            let reqEleCredits = 0; // 選必/必選
+
+            mySchedule.forEach(c => {
+                let cred = getCredits(c);
+                total += cred;
+                
+                let type = getSafeText(c.required_elective);
+                if (type.includes('必修')) {
+                    reqCredits += cred;
+                } else if (type.includes('選必') || type.includes('必選')) {
+                    reqEleCredits += cred;
+                } else if (type.includes('選修')) {
+                    eleCredits += cred;
+                }
+            });
+
             let statusDiv = document.getElementById('credit-status');
             let colorVar = (total < 16 || total > 25) ? 'var(--color-danger)' : 'var(--color-success)';
-            statusDiv.innerHTML = `<span style="color: ${colorVar}; font-weight: bold;">目前學分：${total} 學分</span>`;
+            
+            statusDiv.innerHTML = `
+                <div style="color: ${colorVar}; font-weight: bold; font-size: 16px;">總計：${total} 學分</div>
+                <div class="credit-divider"></div>
+                <div class="credit-details">
+                    <span>必修: <strong>${reqCredits}</strong></span>
+                    <span>選修: <strong>${eleCredits}</strong></span>
+                    <span>選必: <strong>${reqEleCredits}</strong></span>
+                </div>
+            `;
         }
 
         function addCourse(id) {
@@ -390,7 +424,6 @@
                         const r = document.createElement('button'); 
                         r.className = 'course-block-remove'; 
                         r.innerHTML = '❌'; 
-                        // 💡 修正這裡：直接傳遞 c.id 給函數，不再加上擾亂的引號
                         r.onclick = () => removeCourse(c.id); 
                         b.appendChild(r); 
                         grid.appendChild(b);
