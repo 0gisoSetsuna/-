@@ -103,20 +103,18 @@
         #credit-status { font-size: 16px; background: var(--bg-container); padding: 5px 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         .visual-timetable-container { width: 100%; overflow-x: auto; background: var(--bg-container); padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        /* 💡 修正：將課表每列最小高度從 75px 加大到 105px，以容納更多課程資訊 */
         .timetable-grid { display: grid; grid-template-columns: 70px repeat(6, 1fr); grid-template-rows: 50px repeat(14, minmax(105px, auto)); gap: 1px; background-color: var(--grid-bg); border: 1px solid var(--grid-bg); border-radius: 5px; min-width: 900px; }
         .grid-header { background-color: var(--schedule-bg); color: var(--color-primary); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 15px; }
         .period-cell { background-color: var(--panel-bg); color: var(--text-main); font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 14px; }
         .empty-cell { background-color: var(--empty-cell); }
         
-        /* 💡 課表區塊樣式微調 */
         .course-block { background-color: var(--course-bg); color: var(--course-text); padding: 8px; border-radius: 5px; font-size: 12px; display: flex; flex-direction: column; justify-content: flex-start; position: relative; border-left: 5px solid var(--course-border); overflow: hidden; }
         .course-block:hover { background-color: var(--course-hover); }
         .course-title { font-weight: bold; font-size: 13px; margin-bottom: 5px; color: var(--course-title); padding-right: 15px; line-height: 1.2; }
         .course-info-list { font-size: 11px; line-height: 1.5; }
         .course-info-list span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #ff5252; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.6; }
+        .course-block-remove { position: absolute; top: 3px; right: 3px; background: transparent; color: #ff5252; border: none; font-size: 16px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.6; z-index: 10; }
         .course-block-remove:hover { opacity: 1; color: #ff0000; }
 
         /* 表格樣式 */
@@ -224,9 +222,6 @@
         const MAX_CAPACITY = 2; 
         const MAX_WAITLIST = 5; 
 
-        // ==========================================
-        // 主題切換邏輯
-        // ==========================================
         function toggleTheme() {
             const isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -241,14 +236,10 @@
             }
         }
 
-        // ==========================================
-        // 資料與系統邏輯
-        // ==========================================
         function cleanSymbols(str) { 
             return (str || '').toString().replace(/\s*[,，/;；]\s*/g, '、').trim(); 
         }
 
-        // 幫未定資訊加上「待定」文字
         function getSafeText(val) {
             let s = cleanSymbols(val);
             if (s === '' || s === 'null' || s === '0' || s === '00') return '待定';
@@ -380,7 +371,6 @@
                         const b = document.createElement('div'); b.className = 'course-block';
                         b.style.gridColumn = d + 1; b.style.gridRow = idx + 2;
                         
-                        // 💡 整理課程詳細資訊
                         let cred = getCredits(c);
                         let req = getSafeText(c.required_elective);
                         let teacher = getSafeText(c.teacher);
@@ -396,8 +386,14 @@
                                 <span title="教室">📍 ${room}</span>
                             </div>
                         `;
-                        const r = document.createElement('button'); r.className = 'course-block-remove'; r.innerHTML = '❌'; r.onclick = () => removeCourse(`'${c.id}'`);
-                        b.appendChild(r); grid.appendChild(b);
+                        
+                        const r = document.createElement('button'); 
+                        r.className = 'course-block-remove'; 
+                        r.innerHTML = '❌'; 
+                        // 💡 修正這裡：直接傳遞 c.id 給函數，不再加上擾亂的引號
+                        r.onclick = () => removeCourse(c.id); 
+                        b.appendChild(r); 
+                        grid.appendChild(b);
                     } else { grid.appendChild(createCell('', 'empty-cell')); }
                 }
             });
@@ -429,7 +425,6 @@
 
             let statusColor = isEnr ? 'var(--color-success)' : (isFull ? 'var(--color-danger)' : 'var(--color-primary)');
 
-            // 調整表格內的待定顯示
             const formatCell = (val) => {
                 let s = getSafeText(val);
                 return s === '待定' ? `<span style="color:var(--color-pending); font-style:italic;">待定</span>` : s;
