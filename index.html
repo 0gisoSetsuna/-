@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>龍華科技大學 - 模擬選課系統 (可視化課表)</title>
+    <title>龍華科技大學 - 選課系統</title>
     <style>
         /* =============================================
            CSS 自訂變數 - 淺色主題
@@ -484,7 +484,7 @@
     <div id="login-screen" class="auth-screen">
         <div class="auth-box">
             <h2>🔐 系統登入</h2>
-            <p class="auth-subtitle">龍華科技大學 模擬選課系統</p>
+            <p class="auth-subtitle">龍華科技大學 選課系統</p>
             <!-- 學號輸入 -->
             <input type="text" id="login-username" placeholder="請輸入學號或帳號">
             <!-- 密碼輸入（Enter 鍵可直接登入） -->
@@ -523,14 +523,14 @@
     </div>
 
     <!-- =============================================
-         主要內容區域（登入後可見）
+         主要內容區域（登入後可見） 
          ============================================= -->
     <div class="container">
 
         <!-- 頁首：系統名稱 + 主題切換 -->
         <div class="header-container">
-            <h1><span>🏫</span> 龍華科技大學 模擬選課系統</h1>
-            <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">🌙 深色模式</button>
+        <h1><span><img src="image/4096-576-max.png" alt="龍華校徽" style="width: 350px; height: 60px;"></span> 114學年度第二學期選課系統</h1>
+        <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">🌙 深色模式</button>
         </div>
 
         <!-- 登入後顯示的使用者資訊列 -->
@@ -542,7 +542,7 @@
         <!-- 個人可視化課表區塊 -->
         <div class="my-schedule-panel">
             <div class="my-schedule-header">
-                <h2><span>🎒</span> 我的專屬課表</h2>
+                <h2> 我的課表 正式上課：3月5日</h2>
                 <!-- 學分統計資訊（由 JS 動態更新） -->
                 <div id="credit-status"></div>
             </div>
@@ -1054,10 +1054,10 @@
                         b.innerHTML = `
                             <div class="course-title">${getSafeText(c.course_name)}</div>
                             <div class="course-info-list">
-                                <span title="班級">🏫 ${clsName}</span>
-                                <span title="選/必修 與 學分">🏷️ ${req} (${cred}學分)</span>
-                                <span title="授課教師">👨‍🏫 ${teacher}</span>
-                                <span title="教室">📍 ${room}</span>
+                                <span title="班級"> ${clsName}</span>
+                                <span title="選/必修 與 學分"> ${req} (${cred}學分)</span>
+                                <span title="授課教師"> ${teacher}</span>
+                                <span title="教室"> ${room}</span>
                             </div>
                         `;
 
